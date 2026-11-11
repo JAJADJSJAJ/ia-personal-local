@@ -1,0 +1,29 @@
+# Modelos y adaptadores (pesan gigas)
+*.gguf
+*.safetensors
+*.bin
+*.pt
+modelos/
+adaptadores/
+
+# Datos de ella: viven solo en la PC de IA
+datos/
+diario/
+proyectos/
+*.db
+*.db-wal
+*.db-shm
+logs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secretos
+.env
+
+# Sistema
+.DS_Store
+Thumbs.db
