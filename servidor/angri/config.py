@@ -95,7 +95,9 @@ AVISOS_POR_DIA = 2
 AVISOS_SEPARACION_HORAS = 3
 AVISOS_DESDE_HORA = 10          # nunca de noche ni muy temprano
 AVISOS_HASTA_HORA = 22
-PROB_DUDA = 0.5                 # al dejar una investigación sin respuesta, a veces le pregunta a Fran
+AVISOS_OPCIONES = 4             # novedades entre las que elige (más "ninguna, hoy no")
+AVISOS_ABRIR = "http://angri.local:8080"   # lo que abre tocar el aviso
+PROB_DUDA = 0.5                # al dejar una investigación sin respuesta, a veces le pregunta a Fran
 
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres

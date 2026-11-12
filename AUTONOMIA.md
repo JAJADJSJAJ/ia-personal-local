@@ -458,6 +458,10 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   - **Topes, decididos por código:** 2 por día, separados por al menos 3 horas, y solo entre las 10 y las 22.
   - **Ningún aviso espera respuesta.** Al dejar una investigación sin respuesta, la mitad de las veces le pregunta a Fran: "¿vos sabés algo? Si no, no pasa nada".
   - Lo que ya se contó en la charla no se vuelve a avisar.
+  - **Qué contar lo elige Angri.** Recibe hasta 4 novedades en orden al azar más la opción "ninguna, hoy no", y elige entre ellas. Elegir entre opciones evita el "sí a todo" que dan las preguntas de sí o no. Si elige callarse, no lo vuelve a pensar hasta 3 horas después.
+  - **Prueba real, con 4 opciones:** en 1 de 3 intentos eligió contar algo y en los otros 2 prefirió callarse ("no moleste a nadie con historias sin sentido"). Como tiene unas 4 oportunidades por día, sale alrededor de 1 aviso por día.
+  - El mensaje lo redacta ella. Si mezcla cosas o agrega algo que no pasó, se manda el texto armado por código.
+  - Tocar el aviso abre la charla (`http://angri.local:8080`, que funciona en casa). Ahí se le contesta.
 - **Su propia naturaleza la descubre sola:** Fran prefirió no darle un archivo que le explique qué es. Las preguntas que se haga sobre sí ("¿qué es la memoria?") pasan el filtro y se investigan como cualquier otra.
 - **Fase G (12 de noviembre): vectores de control, probados pero no activados.**
   - Antes de tocar nada se midió el voseo con el prompt real de la charla (`pruebas/medir-voseo.py`): dio 94% de voseo, con 1 respuesta con tuteo de 24.

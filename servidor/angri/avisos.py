@@ -1,17 +1,22 @@
 """Avisos al celular de Fran por ntfy.sh: Angri cuenta algo por su cuenta, de vez en cuando.
 
 - Canal con nombre largo y al azar (en /var/lib/angri/ntfy-canal). Fran se suscribe con la app ntfy.
-- Lo decide el código: solo novedades que valen (respuesta encontrada, tema nuevo, una duda para Fran,
-  su género), como mucho AVISOS_POR_DIA por día, separados por horas, y nunca de noche.
+- El código pone el marco: solo novedades que pasaron de verdad (respuesta encontrada, tema nuevo, una duda
+  para Fran, su identidad), como mucho AVISOS_POR_DIA por día, separados por horas, y nunca de noche.
+- Dentro de ese marco elige Angri: ve hasta 4 novedades en orden al azar y la opción "ninguna, hoy no".
+  Elegir entre opciones evita el "sí a todo" de un modelo chico. Si elige ninguna, no escribe.
+  El mensaje lo redacta ella; si agrega cosas que no pasaron, se manda el texto armado por código.
 - Ningún aviso espera respuesta. Lo avisado sigue en la bandeja: la charla lo cuenta igual.
 - Sale de la casa solo el texto del aviso (lo que leyó y sus dudas): nada de charlas ni datos de Fran.
 """
+import random
+import re
 import secrets
 import sys
 import urllib.request
 from datetime import datetime, timedelta
 
-from . import bandeja, config, memoria
+from . import bandeja, config, memoria, modelo, verificar
 
 TIPOS_QUE_AVISAN = ("respuesta", "tema", "duda", "identidad")
 TITULOS = {"respuesta": "Encontré algo", "tema": "Algo me empezó a interesar",
@@ -42,24 +47,71 @@ def puede_avisar(con, ahora: datetime | None = None) -> bool:
     n_hoy = con.execute("SELECT COUNT(*) FROM bandeja WHERE avisado >= ?", (hoy,)).fetchone()[0]
     if n_hoy >= config.AVISOS_POR_DIA:
         return False
-    ultimo = con.execute("SELECT MAX(avisado) FROM bandeja").fetchone()[0]
+    ultimo = max(filter(None, [
+        con.execute("SELECT MAX(avisado) FROM bandeja").fetchone()[0],
+        con.execute("SELECT MAX(fecha) FROM eventos WHERE tipo='aviso_ninguna'").fetchone()[0]]), default=None)
     return not ultimo or ahora - datetime.fromisoformat(ultimo) >= timedelta(hours=config.AVISOS_SEPARACION_HORAS)
 
 
-def elegir(con) -> tuple | None:
+SISTEMA_ELEGIR = (
+    "Sos Angri, una IA que vive en la computadora de Fran y lee por su cuenta. Hablás en español rioplatense. "
+    "Nadie te obliga a escribirle: elegís vos si hoy le querés contar algo."
+)
+
+PEDIDO_ELEGIR = """Estas son cosas que te pasaron hace poco:
+{opciones}
+
+¿Le querés contar alguna a Fran ahora, con un mensajito al celular? También podés no escribirle.
+Respondé en la primera línea solo con el número que elegís.
+Si elegiste algo, en la segunda línea escribí el mensaje para Fran: 1 o 2 oraciones, en primera persona,
+usando solo lo que dice esa opción. Sin asteriscos."""
+
+_PERSONA_CAMBIADA = re.compile(r"\b(dejaste|encontraste|descubriste|buscaste|investigaste|le[ií]ste|"
+                               r"te diste cuenta|te interes[aó])\b", re.I)
+
+
+def candidatas(con) -> list[tuple]:
     _columna(con)
     desde = (datetime.now() - timedelta(days=1)).isoformat(timespec="seconds")   # nada viejo
     marcas = ",".join("?" * len(TIPOS_QUE_AVISAN))
     return con.execute(
         f"SELECT id, tipo, texto FROM bandeja WHERE avisado IS NULL AND entregado IS NULL AND fecha >= ? "
-        f"AND tipo IN ({marcas}) ORDER BY importancia DESC, id DESC LIMIT 1", (desde, *TIPOS_QUE_AVISAN)).fetchone()
+        f"AND tipo IN ({marcas}) ORDER BY importancia DESC, id DESC LIMIT ?",
+        (desde, *TIPOS_QUE_AVISAN, config.AVISOS_OPCIONES)).fetchall()
+
+
+def elegir(con) -> tuple | None:
+    """Devuelve (id, tipo, mensaje) de lo que Angri eligió contar, o None si eligió no escribir."""
+    opciones = candidatas(con)
+    if not opciones:
+        return None
+    random.shuffle(opciones)
+    ninguna = len(opciones) + 1
+    lista = "\n".join(f"{i}. {o[2]}" for i, o in enumerate(opciones, 1)) + f"\n{ninguna}. Ninguna, hoy no."
+    texto = modelo.llamar("elegir_aviso", PEDIDO_ELEGIR.format(opciones=lista), sistema=SISTEMA_ELEGIR).strip()
+    lineas = [l.strip() for l in texto.splitlines() if l.strip()]
+    numero = re.match(r"\D*(\d+)", lineas[0]) if lineas else None
+    if not numero or not 1 <= int(numero.group(1)) <= ninguna:
+        memoria.evento(con, "aviso_ninguna", f"respuesta sin número: {texto[:120]}")
+        return None
+    if int(numero.group(1)) == ninguna:
+        memoria.evento(con, "aviso_ninguna", f"eligió no escribir entre {len(opciones)} opciones")
+        return None
+    mid, tipo, original = opciones[int(numero.group(1)) - 1]
+    mensaje = " ".join(lineas[1:]).replace("*", "").strip()
+    if (len(mensaje) < 15 or verificar.anclaje(mensaje, original) < config.ANCLAJE_MINIMO
+            or verificar.parece_orden(mensaje) or _PERSONA_CAMBIADA.search(mensaje)):
+        mensaje = original   # lo eligió ella, pero se manda con el texto armado por código
+    return mid, tipo, mensaje
 
 
 def enviar(titulo: str, texto: str) -> None:
     pedido = urllib.request.Request(
         f"{config.NTFY_URL}/{canal()}", data=texto.encode("utf-8"), method="POST",
         headers={"Title": titulo if titulo.isascii() else _rfc2047(titulo),   # ntfy acepta RFC 2047 para acentos
-                 "Tags": "seedling", "User-Agent": config.USER_AGENT})
+                 "Tags": "seedling", "User-Agent": config.USER_AGENT,
+                 # Tocar el aviso abre la charla (anda en casa): ahí se le contesta.
+                 "Click": config.AVISOS_ABRIR})
     with urllib.request.urlopen(pedido, timeout=20) as r:
         r.read()
 
@@ -73,7 +125,11 @@ def avisar(con) -> str | None:
     """Se llama al final de cada ciclo. Manda como mucho un aviso, si corresponde."""
     if not config.AVISOS_ACTIVOS or not puede_avisar(con):
         return None
-    elegido = elegir(con)
+    try:
+        elegido = elegir(con)
+    except OSError:
+        return None   # el modelo no respondió: otra vez será
+    con.commit()
     if not elegido:
         return None
     mid, tipo, texto = elegido
