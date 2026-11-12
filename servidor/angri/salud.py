@@ -9,7 +9,7 @@
 import traceback
 from datetime import datetime, timedelta
 
-from . import config, memoria
+from . import bandeja, config, memoria
 
 PARTES = {"fuentes.py": "internet (Wikipedia)", "modelo.py": "el modelo",
           "vectores.py": "los embeddings", "recordar.py": "los embeddings"}
@@ -74,13 +74,17 @@ def registrar_falla(con, exc: BaseException, objetivo_id: int | None, escribir_d
             con.execute("UPDATE preguntas SET estado='cerrada' WHERE id=(SELECT pregunta_id FROM objetivos WHERE id=?)",
                         (objetivo_id,))
             escribir_diario(f"Dejé *{fila[0]}*: cada vez que la intento algo se rompe.")
+            bandeja.dejar(con, "fallido", f"Dejé «{fila[0]}»: cada vez que la intentaba algo se rompía.", 1)
 
     n = len(fallas_seguidas(con))
     if n == config.FALLAS_ANTES_DE_ESPERAR:
         escribir_diario(f"Algo no responde ({parte}). Me tomo un descanso y vuelvo a probar más tarde.")
+        bandeja.dejar(con, "falla", f"Tuve problemas: no respondía {parte}, así que me tomé un descanso.", 2)
     con.commit()
 
 
 def anotar_recuperacion(con, fallas_previas: int, escribir_diario) -> None:
     if fallas_previas >= config.FALLAS_ANTES_DE_ESPERAR:
         escribir_diario(f"Volví a andar después de {fallas_previas} intentos fallidos.")
+        bandeja.dejar(con, "recuperada", f"Ya volví a andar después de {fallas_previas} intentos fallidos.", 1)
+        con.commit()

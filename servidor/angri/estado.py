@@ -1,7 +1,7 @@
 """Estado de Angri: contadores medidos por código y las últimas líneas del diario."""
 from datetime import date, timedelta
 
-from . import config, memoria, temas
+from . import bandeja, config, memoria, salud, temas
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     def contar(sql, *args):
         return con.execute(sql, args).fetchone()[0]
 
-    print("Angri —", "EN PAUSA" if config.PAUSA.exists() else "despierta")
+    print("Angri —", "EN PAUSA" if config.PAUSA.exists() else (salud.descansando(con) or "despierta"))
     print()
     print(f"Lecturas      hoy {contar('SELECT COUNT(*) FROM lecturas WHERE fecha >= ?', hoy):>4}"
           f"   semana {contar('SELECT COUNT(*) FROM lecturas WHERE fecha >= ?', semana):>4}"
@@ -21,6 +21,7 @@ def main():
           f"   total {contar('SELECT COUNT(*) FROM notas'):>5}")
     abiertas = contar("SELECT COUNT(*) FROM preguntas WHERE estado='abierta'")
     print(f"Preguntas     abiertas {abiertas:>4}")
+    print(f"Mensajes para vos sin leer {len(bandeja.pendientes(con)):>3}   (se los cuenta al abrir 'angri charla')")
     ranking = temas.ranking(con, 5)
     if ranking:
         print("\nLo que le interesa ahora (temas que se formaron solos):")
@@ -44,7 +45,8 @@ def main():
                 print(f"     → {' '.join(r.split())[:200]}")
     modos = dict(con.execute("SELECT modo, COUNT(*) FROM ciclos WHERE fecha >= ? GROUP BY modo", (hoy,)).fetchall())
     if modos:
-        print(f"\nCiclos hoy: {modos.get('azar', 0)} al azar, {modos.get('objetivo', 0)} siguiendo sus preguntas")
+        print(f"\nCiclos hoy: {modos.get('azar', 0)} al azar, {modos.get('objetivo', 0)} siguiendo sus preguntas"
+              f", {modos.get('falla', 0)} con fallas")
     print()
     print("Últimos 7 días:")
     for tipo, n in con.execute(

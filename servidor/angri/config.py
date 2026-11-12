@@ -65,6 +65,10 @@ ESPERA_INICIAL_MIN = 60        # el descanso se duplica con cada falla nueva...
 ESPERA_MAXIMA_MIN = 360        # ...sin pasar de 6 horas
 FALLAS_POR_OBJETIVO = 2        # en 24 h: la investigación se abandona como 'fallido'
 
+# Fase D: bandeja de mensajes para Fran
+BANDEJA_DIAS = 7               # lo que tiene más de una semana ya no se cuenta
+BANDEJA_POR_SALUDO = 3         # novedades que cuenta al abrir la charla
+
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres
 ANCLAJE_MINIMO = 0.5   # fracción de palabras del resumen que tienen que estar en la fuente

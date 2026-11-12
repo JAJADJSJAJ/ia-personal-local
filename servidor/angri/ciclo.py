@@ -14,7 +14,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from . import config, fuentes, memoria, modelo, objetivos, recordar, salud, temas, vectores, verificar
+from . import bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, temas, vectores, verificar
 
 _objetivo_en_curso: int | None = None  # para saber qué investigación estaba en marcha si el ciclo falla
 
@@ -165,6 +165,7 @@ def ciclo_azar(con) -> tuple[str, int | None]:
         linea += f" Me quedé pensando: {pregunta}"
     if tema and tema["nombre"] and tema.get("recien_nombrado"):
         linea += f" Me doy cuenta de que me interesa: **{tema['nombre']}**."
+        bandeja.dejar(con, "tema", f"Me di cuenta de que me interesa un tema: {tema['nombre']}.", 2)
     escribir_diario(linea)
     return f"nota guardada: {art['titulo']}", tema["tema_id"] if tema else None
 
@@ -223,6 +224,8 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
             estado = "agotado"
         if estado:
             escribir_diario(f"Dejé de buscar *{pregunta}*: no encuentro nada que la responda.")
+            bandeja.dejar(con, "dejado", f"Dejé de buscar «{pregunta}»: no encontré nada que la responda.", 1)
+            con.commit()
         return f"objetivo {oid}: sin resultados para {probadas} ({estado or 'sigue abierto'})", None
 
     art["texto"] = fuentes.parrafos_relevantes(art["texto"], vector_pregunta, vectores.documentos)
@@ -237,8 +240,13 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
     if estado == "respondido":
         resp = con.execute("SELECT respuesta FROM objetivos WHERE id=?", (oid,)).fetchone()[0]
         escribir_diario(f"¡Encontré respuesta a *{pregunta}*! {primera_oracion(resp) if resp else ''}".strip())
+        bandeja.dejar(con, "respuesta", f"Encontré respuesta a «{pregunta}»: {resp}" if resp
+                      else f"Encontré respuesta a «{pregunta}».", 3)
     elif estado in ("agotado", "sin_presupuesto"):
         escribir_diario(f"Dejé *{pregunta}* por ahora: no encontré una respuesta clara.")
+        bandeja.dejar(con, "dejado", f"Dejé «{pregunta}» por ahora: no encontré una respuesta clara.", 1)
+    if tema and tema["nombre"] and tema.get("recien_nombrado"):
+        bandeja.dejar(con, "tema", f"Me di cuenta de que me interesa un tema: {tema['nombre']}.", 2)
     return f"objetivo {oid}: {art['titulo']} ({estado or 'sigue abierto'})", tema["tema_id"] if tema else None
 
 

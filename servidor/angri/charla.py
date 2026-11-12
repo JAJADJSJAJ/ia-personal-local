@@ -7,7 +7,7 @@ Mientras dura la charla, el ciclo de fondo no corre: la charla tiene prioridad.
 import sys
 import uuid
 
-from . import config, memoria, modelo, recordar
+from . import bandeja, config, memoria, modelo, recordar
 
 SISTEMA_CHARLA = """Sos Angri. Hablás con Fran en español rioplatense, con voseo, de forma breve y natural.
 Sos una IA que vive en una computadora en el cuarto de Fran; leés cosas por tu cuenta y tenés memoria.
@@ -44,8 +44,14 @@ def main():
     sesion = uuid.uuid4().hex[:8]
     historial: list[dict] = []
     ver = "--recuerdos" in sys.argv
-    print("Charla con Angri. Escribí 'chau' para salir.\n")
+    print("Charla con Angri. Escribí 'novedades' para ver lo que tenga pendiente y 'chau' para salir.\n")
     try:
+        _marcar_charlando()
+        if hola := bandeja.saludo(con):
+            # Lo cuenta ella primero; queda en el historial para que Fran pueda preguntar sobre eso.
+            memoria.guardar_episodio(con, sesion, "angri", hola)
+            historial.append({"role": "assistant", "content": hola})
+            print("angri ›", hola, "\n")
         while True:
             _marcar_charlando()
             try:
@@ -56,6 +62,12 @@ def main():
                 continue
             if mensaje.lower() in {"chau", "salir", "exit"}:
                 break
+            if mensaje.lower().strip("¿?¡! ") in {"novedades", "qué más", "que mas", "qué más tenés"}:
+                resto = bandeja.resto(con)
+                print("angri ›", resto or "Nada más por ahora.", "\n")
+                if resto:
+                    historial.append({"role": "assistant", "content": resto})
+                continue
             _marcar_charlando()
             respuesta, recuerdos = responder(con, sesion, historial, mensaje)
             if ver:
