@@ -417,6 +417,11 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
 - **Las preguntas de Fran no son datos:** no se recuerdan.
 - **Piso absoluto de parecido (coseno 0,32):** sin él, cuando hay pocos recuerdos se cuela uno sin relación y el modelo inventa a partir de eso.
 - **Los recuerdos van pegados al mensaje**, no en las instrucciones generales: un modelo chico les presta más atención.
+- **Fase C (12 de noviembre):** temas que se forman solos (centro por embeddings, nombre al juntar 3 notas), peso con novedad en campana y olvido diario, objetivos con presupuesto de 5 lecturas y cierre por código. Por ahora busca solo en Wikipedia en español.
+- **Buscar con la pregunta entera no encuentra nada** (Wikipedia exige todas las palabras). Se busca con palabras clave del modelo y, de respaldo, del código.
+- **Hace falta filtrar preguntas antes de investigarlas:** el modelo genera muchas que no se responden buscando ("¿qué aprendiste...?", "¿de qué manera la soledad moldeó...?"). Filtro por código + pregunta SI/NO al modelo.
+- **De los resultados se lee el que más se parece a la pregunta**, no el primero; si ninguno se parece (coseno < 0,35), no se lee nada.
+- **Notas "meta" ("el texto no menciona X") se descartan:** no son datos del mundo.
 - **Las notas cuentan datos, no lecciones.** "Escribí qué aprendiste" producía moralejas inventadas; se pide "contá qué dice el texto". Además se controla por código que las palabras del resumen estén en la fuente (anclaje ≥ 50%).
 
 **Pendiente**

@@ -33,6 +33,44 @@ def _recortar(texto: str) -> str:
     return texto[:corte].strip()
 
 
+def buscar(consulta: str, ya_leidos: set[str], cantidad: int = 5) -> list[str]:
+    """Títulos de artículos de Wikipedia que responden a la búsqueda y no se leyeron."""
+    datos = _pedir({
+        "action": "query", "format": "json", "formatversion": "2",
+        "list": "search", "srsearch": consulta, "srlimit": str(cantidad * 2), "srnamespace": "0",
+    })
+    titulos = [r["title"] for r in datos.get("query", {}).get("search", [])]
+    url = "https://es.wikipedia.org/wiki/"
+    return [t for t in titulos if url + t.replace(" ", "_") not in ya_leidos and not t.startswith("Anexo:")][:cantidad]
+
+
+def articulo(titulo: str) -> dict | None:
+    """El artículo completo (sin recortar) de un título."""
+    datos = _pedir({
+        "action": "query", "format": "json", "formatversion": "2", "titles": titulo,
+        "prop": "extracts|info", "explaintext": "1", "inprop": "url", "redirects": "1",
+    })
+    paginas = datos.get("query", {}).get("pages", [])
+    if not paginas or "missing" in paginas[0]:
+        return None
+    p = paginas[0]
+    texto = _limpiar(p.get("extract", ""))
+    if len(texto) < config.LARGO_MINIMO // 2:
+        return None
+    return {"titulo": p.get("title", titulo), "url": p.get("fullurl", ""), "texto": texto}
+
+
+def parrafos_relevantes(texto: str, vector_pregunta, embeber) -> str:
+    """Se queda con los párrafos más relacionados con la pregunta, en su orden original."""
+    parrafos = [p.strip() for p in texto.split("\n") if len(p.strip()) > 80]
+    if len(parrafos) <= config.PARRAFOS_POR_LECTURA:
+        return _recortar("\n\n".join(parrafos))
+    m = embeber(parrafos)
+    elegidos = sorted(sorted(range(len(parrafos)), key=lambda i: -float(m[i] @ vector_pregunta))
+                      [: config.PARRAFOS_POR_LECTURA])
+    return _recortar("\n\n".join(parrafos[i] for i in elegidos))
+
+
 def articulo_al_azar(ya_leidos: set[str], intentos: int = 8) -> dict | None:
     """Devuelve {titulo, url, texto} de un artículo útil y no leído, o None."""
     for _ in range(intentos):

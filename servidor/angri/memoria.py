@@ -34,6 +34,33 @@ CREATE TABLE IF NOT EXISTS accesos (
     PRIMARY KEY (tipo, ref_id)
 );
 CREATE VIRTUAL TABLE IF NOT EXISTS buscar USING fts5(texto, tipo UNINDEXED, ref_id UNINDEXED);
+-- Fase C
+CREATE TABLE IF NOT EXISTS temas (
+    id INTEGER PRIMARY KEY, nombre TEXT, centro BLOB NOT NULL,
+    peso REAL NOT NULL DEFAULT 0, n INTEGER NOT NULL DEFAULT 0,
+    creado TEXT NOT NULL, actualizado TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS nota_tema (
+    nota_id INTEGER PRIMARY KEY REFERENCES notas(id), tema_id INTEGER NOT NULL REFERENCES temas(id),
+    novedad REAL
+);
+CREATE TABLE IF NOT EXISTS objetivos (
+    id INTEGER PRIMARY KEY, pregunta_id INTEGER REFERENCES preguntas(id), pregunta TEXT NOT NULL,
+    estado TEXT NOT NULL DEFAULT 'abierto',   -- abierto | respondido | agotado | sin_presupuesto
+    sabido TEXT NOT NULL DEFAULT '', proximo TEXT, gastado INTEGER NOT NULL DEFAULT 0,
+    presupuesto INTEGER NOT NULL, respuesta TEXT, creado TEXT NOT NULL, ultima TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS objetivo_nota (
+    objetivo_id INTEGER NOT NULL REFERENCES objetivos(id), nota_id INTEGER NOT NULL REFERENCES notas(id),
+    responde TEXT NOT NULL, PRIMARY KEY (objetivo_id, nota_id)  -- SI | PARCIAL | NO
+);
+CREATE TABLE IF NOT EXISTS busquedas (
+    id INTEGER PRIMARY KEY, objetivo_id INTEGER REFERENCES objetivos(id), fecha TEXT NOT NULL,
+    consulta TEXT NOT NULL, resultados INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ciclos (
+    id INTEGER PRIMARY KEY, fecha TEXT NOT NULL, modo TEXT NOT NULL, tema_id INTEGER, resultado TEXT
+);
 """
 
 

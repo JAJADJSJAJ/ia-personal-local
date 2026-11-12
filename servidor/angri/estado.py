@@ -1,7 +1,7 @@
 """Estado de Angri: contadores medidos por código y las últimas líneas del diario."""
 from datetime import date, timedelta
 
-from . import config, memoria
+from . import config, memoria, temas
 
 
 def main():
@@ -21,6 +21,30 @@ def main():
           f"   total {contar('SELECT COUNT(*) FROM notas'):>5}")
     abiertas = contar("SELECT COUNT(*) FROM preguntas WHERE estado='abierta'")
     print(f"Preguntas     abiertas {abiertas:>4}")
+    ranking = temas.ranking(con, 5)
+    if ranking:
+        print("\nLo que le interesa ahora (temas que se formaron solos):")
+        for _, nombre, peso, n in ranking:
+            print(f"  {nombre:<32} peso {peso:4.1f}   {n} notas")
+    abiertos = con.execute(
+        "SELECT pregunta, gastado, presupuesto FROM objetivos WHERE estado='abierto' ORDER BY ultima DESC"
+    ).fetchall()
+    if abiertos:
+        print("\nInvestigando:")
+        for p, g, pres in abiertos:
+            print(f"  [{g}/{pres}] {p}")
+    cerrados = con.execute(
+        "SELECT pregunta, estado, respuesta FROM objetivos WHERE estado != 'abierto' ORDER BY ultima DESC LIMIT 3"
+    ).fetchall()
+    if cerrados:
+        print("\nÚltimas investigaciones cerradas:")
+        for p, e, r in cerrados:
+            print(f"  ({e}) {p}")
+            if r:
+                print(f"     → {' '.join(r.split())[:200]}")
+    modos = dict(con.execute("SELECT modo, COUNT(*) FROM ciclos WHERE fecha >= ? GROUP BY modo", (hoy,)).fetchall())
+    if modos:
+        print(f"\nCiclos hoy: {modos.get('azar', 0)} al azar, {modos.get('objetivo', 0)} siguiendo sus preguntas")
     print()
     print("Últimos 7 días:")
     for tipo, n in con.execute(

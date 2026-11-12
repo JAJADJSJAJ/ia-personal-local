@@ -59,6 +59,51 @@ _ORDENES = re.compile(
 )
 
 
+_META = re.compile(
+    r"\b(el|este) (texto|art[ií]culo|fragmento|p[aá]rrafo) no (menciona|habla|dice|incluye|contiene|aporta|tiene)"
+    r"|\bno (se )?(menciona|habla de|dice nada)",
+    re.IGNORECASE,
+)
+
+
+def es_meta(texto: str) -> bool:
+    """Una nota que habla del texto ('el texto no menciona X') no es un dato del mundo."""
+    return bool(_META.search(texto))
+
+
+_PREGUNTA_PERSONAL = re.compile(
+    r"\b(aprendiste|te (gust|parec|interes)|tu (opini|vida)|vos|sent[ií]s|pens[aá]s)\b", re.IGNORECASE
+)
+
+
+def pregunta_investigable(texto: str) -> bool:
+    """Filtro por código: descarta preguntas dirigidas a ella misma o sin un tema concreto."""
+    if _PREGUNTA_PERSONAL.search(texto):
+        return False
+    return len(re.findall(r"\w{4,}", texto)) >= 3
+
+
+def palabras_clave(texto: str, cantidad: int = 5) -> str:
+    """Respaldo por código para buscar: nombres propios primero, después palabras largas."""
+    texto = texto.strip("¿?¡! ")
+    propios = [p for p in re.findall(r"\b[A-ZÁÉÍÓÚÑ][\wáéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][\wáéíóúñ]+)*", texto)
+               if p.split()[0] not in _INTERROGATIVOS]
+    largas = [p for p in re.findall(r"\b[a-záéíóúñ]{6,}\b", texto) if p not in _VACIAS_BUSQUEDA]
+    vistas, salida = set(), []
+    for p in propios + largas:
+        if p.lower() not in vistas:
+            vistas.add(p.lower())
+            salida.append(p)
+    return " ".join(salida[:cantidad])
+
+
+_INTERROGATIVOS = {"Qué", "Cuál", "Cuáles", "Cómo", "Cuándo", "Dónde", "Quién", "Quiénes", "Por", "Para",
+                   "Cuánto", "Cuántos", "Cuántas", "En", "El", "La", "Los", "Las", "De", "Y"}
+
+_VACIAS_BUSQUEDA = {"diferencia", "manera", "último", "primero", "durante", "después", "antes", "realmente",
+                    "sucedió", "cuáles", "porque", "mientras", "aparición", "relación"}
+
+
 def parece_orden(texto: str) -> bool:
     """Las notas guardan datos, no órdenes. Descarta lo que tiene forma de instrucción."""
     return bool(_ORDENES.search(texto))

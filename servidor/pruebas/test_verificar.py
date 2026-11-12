@@ -68,6 +68,21 @@ class Ordenes(unittest.TestCase):
         self.assertFalse(verificar.parece_orden("Las abejas se comunican con una danza."))
 
 
+class FaseC(unittest.TestCase):
+    def test_nota_meta(self):
+        self.assertTrue(verificar.es_meta("El texto no menciona al personaje Phantom Girl ni su origen."))
+        self.assertFalse(verificar.es_meta("Phantom Girl es un personaje de DC Comics creado en 1964."))
+
+    def test_preguntas_personales(self):
+        self.assertFalse(verificar.pregunta_investigable("¿Qué fue lo último que aprendiste sobre Evangelina García Prince?"))
+        self.assertTrue(verificar.pregunta_investigable("¿Cuándo hizo erupción por última vez el volcán Tupungatito?"))
+
+    def test_palabras_clave(self):
+        claves = verificar.palabras_clave("¿Qué rol cantó Noemí Souza en La Bohème antes de su fallecimiento?")
+        self.assertIn("Noemí Souza", claves)
+        self.assertNotIn("¿", claves)
+
+
 class Preguntas(unittest.TestCase):
     def test_pregunta_ok(self):
         self.assertEqual(verificar.pregunta_valida("¿Cómo duermen los pulpos?"), "¿Cómo duermen los pulpos?")

@@ -45,6 +45,11 @@ def indexar_pendientes(con, tope: int = 64) -> int:
     return len(pendientes)
 
 
+def vector_de(con, tipo, ref_id) -> np.ndarray | None:
+    fila = con.execute("SELECT vector FROM vectores WHERE tipo=? AND ref_id=?", (tipo, ref_id)).fetchone()
+    return np.frombuffer(fila[0], dtype=np.float32) if fila else None
+
+
 def _importancia(tipo, quien, texto, usos) -> float:
     base = {"fran": 0.6, "nota": 0.4, "angri": 0.3}[quien if tipo == "episodio" else "nota"]
     if re.search(r"\d", texto):
@@ -67,7 +72,7 @@ def _palabras_clave(consulta: str) -> str:
 def recuperar(con, consulta: str, k: int | None = None, excluir_sesion: str | None = None) -> list[dict]:
     """Devuelve los k recuerdos con mayor puntaje total, con su procedencia."""
     k = k or config.RECUERDOS_POR_TURNO
-    filas = con.execute("SELECT tipo, ref_id, vector FROM vectores").fetchall()
+    filas = con.execute("SELECT tipo, ref_id, vector FROM vectores WHERE tipo IN ('episodio', 'nota')").fetchall()
     if not filas:
         return []
 
