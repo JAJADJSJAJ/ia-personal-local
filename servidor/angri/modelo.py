@@ -11,20 +11,26 @@ SISTEMA = "Sos Angri. Escribís en español, en primera persona, de forma breve 
 
 
 def llamar(tarea: str, usuario: str, sistema: str = SISTEMA) -> str:
+    return conversar(tarea, sistema, [{"role": "user", "content": usuario}])
+
+
+def conversar(tarea: str, sistema: str, turnos: list[dict], url: str | None = None) -> str:
+    usuario = turnos[-1]["content"]
     cuerpo = {
-        "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": usuario}],
+        "messages": [{"role": "system", "content": sistema}, *turnos],
         "max_tokens": config.MAX_TOKENS,
         "chat_template_kwargs": {"enable_thinking": False},
         **config.MUESTREO,
     }
     pedido = urllib.request.Request(
-        config.MODELO_URL, data=json.dumps(cuerpo).encode(), headers={"Content-Type": "application/json"}
+        url or config.MODELO_URL, data=json.dumps(cuerpo).encode(), headers={"Content-Type": "application/json"}
     )
     t0 = time.time()
     with urllib.request.urlopen(pedido, timeout=config.TIMEOUT_MODELO) as r:
         datos = json.load(r)
     respuesta = datos["choices"][0]["message"]["content"].strip()
-    _registrar(tarea, usuario, respuesta, time.time() - t0, datos.get("usage", {}))
+    _registrar(tarea, usuario,
+               respuesta, time.time() - t0, datos.get("usage", {}))
     return respuesta
 
 

@@ -1,0 +1,22 @@
+# Embeddings de Angri: convierte textos en vectores para la memoria. Siempre prendido.
+[Unit]
+Description=Angri - embeddings
+After=network.target
+
+[Service]
+User=angri
+Group=angri
+ExecStart=/opt/angri/llama/bin/llama-server \
+  -m /opt/angri/modelos/embeddinggemma-300M-Q8_0.gguf \
+  --embedding --pooling mean \
+  --host 127.0.0.1 --port 8081 \
+  -t 2 -c 2048 -b 2048 -ub 2048
+Restart=always
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

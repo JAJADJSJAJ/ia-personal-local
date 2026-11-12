@@ -409,7 +409,15 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
 - **Sin revisión diaria.** Corre 24/7; la vigilancia es automática.
 
 - **Nombre: Angri.** También es el nombre de la máquina donde vive.
-- **Dos modelos (12 de noviembre):** Qwen3.5 **2B** de día (bucle de curiosidad y charla) y **4B** para el sueño (consolidar, reflexionar, resumen del día). El 0.8B quedó descartado: no copia citas textuales. Ver `pruebas/RESULTADOS-calidad.md`.
+- **Un solo modelo: Qwen3.5 4B para todo (12 de noviembre).** Se probó 2B de día y 4B de noche, pero en la charla con memoria el 2B inventaba escenas enteras. El 0.8B no copia citas textuales. Ver `servidor/pruebas/RESULTADOS-calidad.md` (copia en `pruebas/`).
+- **Embeddings: embeddinggemma-300M** (10/10 en la prueba en español, 4 veces más rápido que Qwen3-Embedding-0.6B).
+
+**Aprendido en la fase B (12 de noviembre)**
+- **Lo que dijo Angri no se recuerda como hecho.** Sus respuestas inventadas volvían como recuerdos y las repetía. Solo cuentan lo que dijo Fran y lo que leyó con cita verificada.
+- **Las preguntas de Fran no son datos:** no se recuerdan.
+- **Piso absoluto de parecido (coseno 0,32):** sin él, cuando hay pocos recuerdos se cuela uno sin relación y el modelo inventa a partir de eso.
+- **Los recuerdos van pegados al mensaje**, no en las instrucciones generales: un modelo chico les presta más atención.
+- **Las notas cuentan datos, no lecciones.** "Escribí qué aprendiste" producía moralejas inventadas; se pide "contá qué dice el texto". Además se controla por código que las palabras del resumen estén en la fuente (anclaje ≥ 50%).
 
 **Pendiente**
 - **Fuentes de exposición al azar.** Wikipedia en español, qué portales de noticias, cuáles no.

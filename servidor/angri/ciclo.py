@@ -11,7 +11,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from . import config, fuentes, memoria, modelo, verificar
+from . import config, fuentes, memoria, modelo, recordar, verificar
 
 SISTEMA_NOTA = (
     "Sos Angri. Tomás notas de lo que leés, en español. Una nota cuenta solo lo que dice el texto: "
@@ -50,11 +50,25 @@ def primera_oracion(texto: str) -> str:
     return texto[: corte + 1] if 0 < corte < 220 else texto[:220]
 
 
+def charlando() -> bool:
+    """La charla tiene prioridad: si Fran habló hace poco, el ciclo espera."""
+    if not config.CHARLANDO.exists():
+        return False
+    minutos = (datetime.now().timestamp() - config.CHARLANDO.stat().st_mtime) / 60
+    return minutos < config.CHARLA_PAUSA_MINUTOS
+
+
 def ciclo() -> str:
     if config.PAUSA.exists():
         return "en pausa"
+    if charlando():
+        return "Fran está charlando, espero"
     con = memoria.abrir()
     try:
+        try:
+            recordar.indexar_pendientes(con)  # notas viejas que todavía no tienen vector
+        except OSError:
+            memoria.evento(con, "sin_embeddings")
         if memoria.lecturas_hoy(con) >= config.PAGINAS_POR_DIA:
             return "presupuesto de lecturas agotado por hoy"
 

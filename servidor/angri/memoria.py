@@ -20,6 +20,20 @@ CREATE TABLE IF NOT EXISTS preguntas (
 CREATE TABLE IF NOT EXISTS eventos (
     id INTEGER PRIMARY KEY, fecha TEXT NOT NULL, tipo TEXT NOT NULL, detalle TEXT
 );
+-- Fase B
+CREATE TABLE IF NOT EXISTS episodios (
+    id INTEGER PRIMARY KEY, fecha TEXT NOT NULL, sesion TEXT NOT NULL,
+    quien TEXT NOT NULL,          -- fran | angri
+    texto TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS vectores (
+    tipo TEXT NOT NULL, ref_id INTEGER NOT NULL, vector BLOB NOT NULL, PRIMARY KEY (tipo, ref_id)
+);
+CREATE TABLE IF NOT EXISTS accesos (
+    tipo TEXT NOT NULL, ref_id INTEGER NOT NULL, ultimo TEXT NOT NULL, usos INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (tipo, ref_id)
+);
+CREATE VIRTUAL TABLE IF NOT EXISTS buscar USING fts5(texto, tipo UNINDEXED, ref_id UNINDEXED);
 """
 
 
@@ -63,6 +77,15 @@ def guardar_pregunta(con, lectura_id, texto) -> int:
     cur = con.execute(
         "INSERT INTO preguntas (fecha, lectura_id, texto) VALUES (?, ?, ?)", (ahora(), lectura_id, texto)
     )
+    return cur.lastrowid
+
+
+def guardar_episodio(con, sesion, quien, texto) -> int:
+    """Cada mensaje de la charla se guarda tal cual, al instante, sin llamar al modelo."""
+    cur = con.execute(
+        "INSERT INTO episodios (fecha, sesion, quien, texto) VALUES (?, ?, ?, ?)", (ahora(), sesion, quien, texto)
+    )
+    con.commit()
     return cur.lastrowid
 
 
