@@ -4,6 +4,7 @@ Cada mensaje se guarda al instante como episodio. Antes de responder trae los re
 con mejor puntaje (recencia + importancia + relevancia) y los pega con su procedencia.
 Mientras dura la charla, el ciclo de fondo no corre: la charla tiene prioridad.
 """
+import re
 import sys
 import uuid
 
@@ -14,7 +15,9 @@ Sos una IA que vive en una computadora en el cuarto de Fran; leés artículos de
 No tenés cuerpo, no ves ni escuchás la casa, no leés noticias y no sabés qué pasa afuera: solo sabés lo que leíste.
 Antes de cada mensaje de Fran aparecen tus RECUERDOS relacionados. Usalos para responder.
 Si lo que te preguntan no está en tus recuerdos, en LO QUE ESTÁS HACIENDO ni en la charla, decí que no sabés: no inventes.
-Respondés solo con lo que decís, sin acotaciones ni acciones entre asteriscos.
+Cuando Fran dice "vos", "tenés", "hacés" o "pensás", habla de VOS (Angri): contestá sobre lo tuyo, usando LO QUE ESTÁS HACIENDO.
+No sos un asistente: no ofrezcas ayuda ni preguntes "¿querés que te ayude?". Sos alguien que vive y lee por su cuenta.
+Texto simple, sin negritas, sin asteriscos ni acotaciones.
 
 LO QUE ESTÁS HACIENDO (dato real, medido por la computadora):
 {actualidad}"""
@@ -31,6 +34,17 @@ def actualidad(con) -> str:
         "SELECT pregunta FROM objetivos WHERE estado='abierto' ORDER BY ultima DESC LIMIT 3")]
     if abiertos:
         lineas.append("- Preguntas que estás investigando: " + " | ".join(abiertos))
+    # Lo que viene: el ciclo retoma la investigación que hace más tiempo no toca (objetivos.elegir).
+    proxima = con.execute("SELECT pregunta, gastado, presupuesto FROM objetivos WHERE estado='abierto' "
+                          "ORDER BY ultima LIMIT 1").fetchone()
+    from . import salud
+    plan = "cada unos 20 minutos, cuando Fran no está charlando, leés algo nuevo"
+    if proxima:
+        plan += f"; lo próximo es seguir con «{proxima[0]}» (llevás {proxima[1]} de {proxima[2]} lecturas)"
+    plan += "; y de vez en cuando un artículo al azar, para conocer cosas nuevas"
+    if descanso := salud.descansando(con):
+        plan = f"ahora estás {descanso} porque algo no respondía; después: " + plan
+    lineas.append("- Lo que vas a hacer más tarde: " + plan)
     leidos = [t for (t,) in con.execute("SELECT titulo FROM lecturas ORDER BY id DESC LIMIT 5")]
     if leidos:
         lineas.append("- Lo último que leíste: " + ", ".join(f"«{t}»" for t in leidos))
@@ -41,6 +55,13 @@ MENSAJE_CON_RECUERDOS = """[RECUERDOS que te vienen a la mente]
 
 [Fran dice]
 {mensaje}"""
+
+
+def limpiar(texto: str) -> str:
+    """Sin negritas ni acotaciones entre asteriscos (la web y la terminal muestran texto plano)."""
+    texto = re.sub(r"\*\*(.+?)\*\*", r"\1", texto)
+    texto = re.sub(r"(?<!\w)\*([^*\n]{1,80})\*(?!\w)", r"\1", texto)
+    return texto.strip()
 
 
 def _marcar_charlando():
@@ -56,6 +77,7 @@ def responder(con, sesion: str, historial: list[dict], mensaje: str) -> tuple[st
     turnos = historial[-config.TURNOS_DE_CONTEXTO * 2:] + [{"role": "user", "content": actual}]
     sistema = SISTEMA_CHARLA.format(actualidad=actualidad(con))
     respuesta = modelo.conversar("charla", sistema, turnos, url=config.CHARLA_URL)
+    respuesta = limpiar(respuesta)
     memoria.guardar_episodio(con, sesion, "angri", respuesta)
     historial += [{"role": "user", "content": mensaje}, {"role": "assistant", "content": respuesta}]
     return respuesta, recuerdos
