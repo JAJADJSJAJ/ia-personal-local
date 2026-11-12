@@ -71,6 +71,8 @@ Referencia real encontrada: un CPU de 2 núcleos con 8 GB DDR2 saca ~2 tok/s con
 | 2B | 1,18 GiB | **14,7** | 88 |
 | 4B | 2,54 GiB | **6,3** | 27 |
 
+Calidad en español (10 preguntas, `pruebas/RESULTADOS-calidad.md`): 0.8B 3,5/10, 2B 6,5/10, 4B 8,5/10. Decisión propuesta: **2B de día, 4B para el sueño, 0.8B descartado** (no copia citas textuales).
+
 Los tres superan lo estimado. Ojo con la lectura del contexto: un prompt de 2.000 tokens (memoria + página leída) tarda unos 10 s en el 0.8B, 23 s en el 2B y 75 s en el 4B, antes de generar la primera palabra.
 
 ---
