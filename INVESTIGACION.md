@@ -63,6 +63,16 @@ Cómo leerlo: cada sección separa lo **confirmado en fuentes** de lo que es **e
 
 Referencia real encontrada: un CPU de 2 núcleos con 8 GB DDR2 saca ~2 tok/s con un modelo de 4B.
 
+**Medido en angri (12 de noviembre)** — `llama-bench -t 4 -p 256 -n 64`, llama.cpp `dd6b945`, Qwen3.5 Q4_K_M
+
+| Modelo | Archivo | Genera (tok/s) | Lee contexto (tok/s) |
+|---|---|---|---|
+| 0.8B | 497 MiB | **30,4** | 202 |
+| 2B | 1,18 GiB | **14,7** | 88 |
+| 4B | 2,54 GiB | **6,3** | 27 |
+
+Los tres superan lo estimado. Ojo con la lectura del contexto: un prompt de 2.000 tokens (memoria + página leída) tarda unos 10 s en el 0.8B, 23 s en el 2B y 75 s en el 4B, antes de generar la primera palabra.
+
 ---
 
 ## 3. Red: adaptador Mercusys MA30N
