@@ -408,8 +408,9 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
 - **Personalidad base mínima.** Solo nombre, idioma y reglas de seguridad. El resto lo construye ella.
 - **Sin revisión diaria.** Corre 24/7; la vigilancia es automática.
 
+- **Nombre: Angri.** También es el nombre de la máquina donde vive.
+
 **Pendiente**
-- **Nombre.**
 - **Fuentes de exposición al azar.** Wikipedia en español, qué portales de noticias, cuáles no.
 - **Cuánta iniciativa.** ¿Solo deja mensajes para cuando Fran vuelva, o también avisa al celular?
 - **Horario de sueño.**

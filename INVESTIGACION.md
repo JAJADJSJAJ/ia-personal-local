@@ -42,6 +42,11 @@ Cómo leerlo: cada sección separa lo **confirmado en fuentes** de lo que es **e
 **PC principal**
 - Windows. Se usa solo para administrar por SSH y programar con Claude Code. **No participa del cómputo de la IA** (su placa de video no se va a usar para este proyecto).
 
+**Verificado al instalar (11 de noviembre)**
+- RAM: 2×8 GB DDR3-1600, uno en el canal A y otro en el B. **Doble canal confirmado** con `dmidecode`.
+- Disco: 280 GB (no 500).
+- Kernel: 6.12.116 (Debian 13).
+
 **Qué limita la velocidad**
 - En CPU manda el ancho de banda de la memoria: por cada token se lee el modelo entero desde RAM. Regla aproximada: `tokens/seg ≈ ancho de banda ÷ tamaño del archivo`, como techo.
 - Un solo módulo de RAM deja la velocidad a la mitad. **Verificar que haya dos módulos (2×8 GB) en doble canal.**
@@ -68,8 +73,12 @@ Referencia real encontrada: un CPU de 2 núcleos con 8 GB DDR2 saca ~2 tok/s con
 - El driver oficial de Mercusys para Linux es una beta que solo cubre kernels 2.6.24 a 5.11. **No usarlo.**
 - La imagen netinst actual de Debian es la 13.7.0 e incluye firmware no libre, que es lo que estos chips necesitan.
 
-**A verificar al instalar**
-- Debian 13 debería traer kernel 6.12 (confirmar con `uname -r`). Si es así, el adaptador debería funcionar con el driver del kernel.
+**Lo que pasó al instalar (11 de noviembre)**
+- El MA30N se identifica como `2c4e:010a` y es efectivamente un RTL8822BU, pero ese ID se agregó al driver `rtw88` recién en el kernel 6.14. Debian 13 trae 6.12, así que no lo toma solo.
+- Solución: una regla de udev que carga `rtw88_8822bu` y le agrega el ID copiando la configuración de un modelo conocido (`echo '2c4e 010a ff 0bda b812' > /sys/bus/usb/drivers/rtw_8822bu/new_id`). Está en `servidor/sistema/70-mercusys-ma30n.rules`.
+- **Importante:** agregar el ID sin el modelo de referencia (`2c4e 010a` solo) hace que el driver arranque sin configuración y falle, dejando la máquina sin poder reiniciar.
+- Interfaz: `wlx088af13af47a`, configurada en `/etc/network/interfaces.d/wifi` con `wpa_supplicant`. Señal desde el cuarto: unos -53 dBm, 216 Mbit/s.
+- La regla se puede borrar cuando el kernel sea 6.14 o más nuevo.
 
 **Comandos de diagnóstico**
 ```bash
@@ -111,6 +120,13 @@ ssh usuario@IP-DE-LA-PC
 ssh-keygen -t ed25519            # una vez, para entrar sin contraseña
 type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh usuario@IP "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 ```
+
+**Lo que pasó al instalar (11 de noviembre)**
+- El instalador en modo texto se colgaba después de elegir el teclado. Se arrancó desde el `boot:` con `/install.amd/vmlinuz initrd=/install.amd/initrd.gz fb=false vga=normal`.
+- En el sistema instalado, la consola 1 no responde al teclado. Usar **Alt+F2**. No afecta al uso por SSH.
+- Los reinicios se colgaban en el último paso. Arreglado con `reboot=pci` en GRUB; además, el watchdog de la placa reinicia si un apagado tarda más de 2 minutos.
+- Nombre de la máquina: **angri** (el nombre de la IA). Usuario: `fran`.
+- SSH solo con llave (contraseña desactivada). Se entra con `ssh fran@angri.local`, sin importar la IP, gracias a `avahi-daemon`.
 
 **Ajustes útiles para poca máquina**
 - `vm.swappiness=10` para que el kernel no mande el modelo a swap.
@@ -400,13 +416,13 @@ Extras para más adelante: voz (reconocimiento y síntesis locales), acceso desd
 
 ## 14. Preguntas abiertas
 
-- ¿La RAM está en doble canal (2 módulos)?
-- ¿La placa arranca en UEFI o solo en BIOS heredado? (Importa para NightRun, no para Debian.)
+- ~~¿La RAM está en doble canal?~~ Sí.
+- ~~¿UEFI o BIOS heredado?~~ El instalador arrancó en modo BIOS.
 - ¿Qué modelo conversa mejor en español rioplatense a velocidad aceptable?
 - ¿Qué modelo de embeddings multilingüe rinde mejor en este CPU?
 - ¿Orma existe tal como se lo describe? (Sin verificar; por ahora, memoria propia.)
 - ¿Cómo se va a hablar con la IA: terminal, web, celular, WhatsApp?
-- ¿Nombre de la IA? (La personalidad no se elige: la construye ella.)
+- ~~¿Nombre de la IA?~~ Angri. (La personalidad no se elige: la construye ella.)
 - ¿Cómo se comporta un modelo de 0.8B a 2B corriendo solo durante semanas? No hay casos publicados.
 
 ---
