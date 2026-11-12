@@ -150,6 +150,9 @@ def hechos_del_dia(con) -> list[str]:
                       else f"Dejé de investigar «{p}» sin una respuesta clara.")
     for (p,) in con.execute("SELECT pregunta FROM objetivos WHERE creado >= ?", (desde,)):
         hechos.append(f"Empecé a investigar «{p}».")
+    from . import dudas
+    for p, r in dudas.respondidas(con, desde):
+        hechos.append(f"Le pregunté a Fran «{p}» y me contó: {' '.join(r.split())[:200]}")
     return hechos[: config.SUENO_HECHOS_MAX]
 
 

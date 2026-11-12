@@ -16,7 +16,7 @@ from datetime import date, datetime
 
 import numpy as np
 
-from . import bandeja, config, memoria, modelo, temas, verificar
+from . import bandeja, config, memoria, modelo, temas, vectores, verificar
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS reflexiones (
@@ -159,6 +159,15 @@ def reflexionar_tema(con) -> str | None:
 
     partes = [f"# {nombre}\n", "## Lo que entendí\n"]
     partes += [f"{o}\n" for o in ok] if ok else ["Todavía no logré juntar nada que pueda respaldar.\n"]
+    # Lo que Fran le contó sobre este tema: va aparte y con su nombre, porque no lo leyó ni lo verificó.
+    from . import dudas
+    contadas = dudas.respondidas(con)
+    if contadas:
+        vp = vectores.documentos([p for p, _ in contadas])
+        de_fran = [(p, r) for (p, r), v in zip(contadas, vp) if float(v @ c) >= config.TEMA_SIMILITUD]
+        if de_fran:
+            partes += ["\n## Lo que me contó Fran\n"]
+            partes += [f"- Sobre «{p}»: {' '.join(r.split())}\n" for p, r in de_fran]
     partes += ["\n## Lo que todavía no sé\n"]
     partes += [f"- {p}\n" for p in no_se[:8]] if no_se else ["- Por ahora no tengo preguntas abiertas sobre esto.\n"]
     partes += [f"\n_Escrito el {datetime.now():%d/%m/%Y} a partir de {len(filas)} notas._\n"]

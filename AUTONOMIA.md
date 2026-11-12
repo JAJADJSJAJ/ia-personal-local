@@ -461,6 +461,14 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   - **Qué contar lo elige Angri.** Recibe hasta 4 novedades en orden al azar más la opción "ninguna, hoy no", y elige entre ellas. Elegir entre opciones evita el "sí a todo" que dan las preguntas de sí o no. Si elige callarse, no lo vuelve a pensar hasta 3 horas después.
   - **Prueba real, con 4 opciones:** en 1 de 3 intentos eligió contar algo y en los otros 2 prefirió callarse ("no moleste a nadie con historias sin sentido"). Como tiene unas 4 oportunidades por día, sale alrededor de 1 aviso por día.
   - El mensaje lo redacta ella. Si mezcla cosas o agrega algo que no pasó, se manda el texto armado por código.
+  - **Las respuestas de Fran se vinculan con sus dudas** (`dudas.py`). Si Fran contesta en la charla y el mensaje se parece a una duda pendiente, se guarda como "lo que me contó Fran". El parecido necesario depende del contexto:
+    - si la duda era lo último que dijo Angri, alcanza con un coseno ≥ 0,20;
+    - si no, hace falta ≥ 0,40.
+
+    La calibración salió así: las respuestas reales dieron entre 0,26 y 0,45, y los mensajes sin relación no pasaron de 0,16. Las respuestas muy cortas y sin palabras de la pregunta ("hizo de Musetta", 0,13) se pierden.
+
+    Lo que le contó Fran aparece en el diario, en el resumen del día, en la reflexión del tema (en una sección aparte, "Lo que me contó Fran") y en la charla. Nunca se mezcla con lo que leyó.
+  - **La aclaración "esto te lo cuenta Fran" tiene que ir pegada al mensaje.** Puesta en el prompt de sistema, el modelo respondió "lo leí en Wikipedia". Pegada al mensaje, la respeta. Es la misma lección que con los recuerdos.
   - Tocar el aviso abre la charla (`http://angri.local:8080`, que funciona en casa). Ahí se le contesta.
 - **Su propia naturaleza la descubre sola:** Fran prefirió no darle un archivo que le explique qué es. Las preguntas que se haga sobre sí ("¿qué es la memoria?") pasan el filtro y se investigan como cualquier otra.
 - **Fase G (12 de noviembre): vectores de control, probados pero no activados.**

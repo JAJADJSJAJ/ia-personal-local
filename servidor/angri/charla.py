@@ -47,7 +47,11 @@ def actualidad(con) -> str:
     if descanso := salud.descansando(con):
         plan = f"ahora estás {descanso} porque algo no respondía; después: " + plan
     lineas.append("- Lo que vas a hacer más tarde: " + plan)
-    from . import sueno
+    from . import dudas, sueno
+    contadas = dudas.respondidas(con)[-5:]
+    if contadas:
+        lineas.append("- Lo que te contó Fran cuando le preguntaste (es lo que dijo Fran, no algo que leíste): "
+                      + " | ".join(f"«{p}» → {' '.join(r.split())[:200]}" for p, r in contadas))
     if ultimo := sueno.ultimo_resumen(con):
         lineas.append(f"- Tu resumen del día {ultimo[0]} (lo escribiste antes de dormir): {ultimo[1]}")
     leidos = [t for (t,) in con.execute("SELECT titulo FROM lecturas ORDER BY id DESC LIMIT 5")]
@@ -94,9 +98,19 @@ def _marcar_charlando():
 
 def responder(con, sesion: str, historial: list[dict], mensaje: str) -> tuple[str, list[dict]]:
     memoria.guardar_episodio(con, sesion, "fran", mensaje)
+    from . import dudas
+    ultimo = historial[-1]["content"] if historial and historial[-1]["role"] == "assistant" else ""
+    try:
+        respondida = dudas.vincular(con, mensaje, ultimo)
+    except OSError:
+        respondida = None
     recordar.indexar_pendientes(con)
     recuerdos = recordar.recuperar(con, mensaje, excluir_sesion=sesion)
     actual = MENSAJE_CON_RECUERDOS.format(recuerdos=recordar.como_texto(recuerdos), mensaje=mensaje) if recuerdos else mensaje
+    if respondida:
+        # Pegado al mensaje y no en el sistema: el modelo chico respeta mejor lo que tiene al lado.
+        actual += (f"\n\n[Nota para vos: con este mensaje Fran te está respondiendo tu duda «{respondida}». "
+                   "Esto te lo cuenta Fran ahora: NO lo leíste en Wikipedia. Agradecé breve y comentá lo que te dijo.]")
     # El historial guarda los mensajes limpios; los recuerdos solo acompañan al mensaje actual
     turnos = historial[-config.TURNOS_DE_CONTEXTO * 2:] + [{"role": "user", "content": actual}]
     sistema = SISTEMA_CHARLA.format(actualidad=actualidad(con)) + reflexiones_para(con, mensaje)

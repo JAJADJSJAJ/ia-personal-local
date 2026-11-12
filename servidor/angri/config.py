@@ -97,7 +97,11 @@ AVISOS_DESDE_HORA = 10          # nunca de noche ni muy temprano
 AVISOS_HASTA_HORA = 22
 AVISOS_OPCIONES = 4             # novedades entre las que elige (más "ninguna, hoy no")
 AVISOS_ABRIR = "http://angri.local:8080"   # lo que abre tocar el aviso
-PROB_DUDA = 0.5                # al dejar una investigación sin respuesta, a veces le pregunta a Fran
+DUDA_DIAS = 21                  # una duda espera respuesta de Fran (sin insistir) hasta 3 semanas
+DUDA_SIMILITUD_CONTEXTO = 0.20  # coseno mensaje ↔ duda si la duda fue lo último que dijo Angri
+                                # (calibrado: respuestas reales 0,26-0,45; mensajes sin relación <= 0,16)
+DUDA_SIMILITUD = 0.40           # si no estaba en la charla, tiene que parecerse bastante
+PROB_DUDA = 0.5               # al dejar una investigación sin respuesta, a veces le pregunta a Fran
 
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres
