@@ -1,0 +1,5 @@
+# Mercusys MA30N (2c4e:010a). El kernel 6.12 de Debian 13 no conoce este ID
+# (se agregó en 6.14). Se lo asocia al driver rtw88 del RTL8822BU copiando la
+# configuración de un modelo conocido (0bda:b812).
+# Instalar en /etc/udev/rules.d/ . Se puede borrar cuando el kernel sea >= 6.14.
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="2c4e", ATTR{idProduct}=="010a", RUN+="/sbin/modprobe rtw88_8822bu", RUN+="/bin/sh -c 'echo 2c4e 010a ff 0bda b812 > /sys/bus/usb/drivers/rtw_8822bu/new_id || true'"
