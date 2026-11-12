@@ -1,0 +1,26 @@
+# Charla con Angri desde el navegador, en la red de casa: http://angri.local:8080
+[Unit]
+Description=Angri - charla por navegador
+After=network-online.target llama-charla.service
+Wants=network-online.target
+
+[Service]
+User=angri
+Group=angri
+WorkingDirectory=/opt/angri/codigo
+Environment=ANGRI_DATOS=/var/lib/angri
+ExecStart=/usr/bin/python3 -m angri.web
+Restart=on-failure
+RestartSec=10
+# Igual que el ciclo: solo puede escribir en su carpeta
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/angri
+# Solo la red local (y localhost): nadie de afuera de la casa
+IPAddressAllow=localhost 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 fe80::/10
+IPAddressDeny=any
+
+[Install]
+WantedBy=multi-user.target

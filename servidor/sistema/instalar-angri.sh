@@ -15,7 +15,7 @@ dpkg -s python3-numpy >/dev/null 2>&1 || sudo DEBIAN_FRONTEND=noninteractive apt
 
 sudo install -d -o angri -g angri -m 750 /var/lib/angri
 sudo install -m 644 "$D/sistema/angri-ciclo.service" "$D/sistema/angri-ciclo.timer" \
-  "$D/sistema/llama-emb.service" "$D/sistema/llama-charla.service" /etc/systemd/system/
+  "$D/sistema/llama-emb.service" "$D/sistema/llama-charla.service" "$D/sistema/angri-web.service" /etc/systemd/system/
 sudo install -m 755 "$D/sistema/angri" /usr/local/bin/angri
 sudo systemctl daemon-reload
 sudo systemctl enable --now llama-emb.service llama-charla.service
@@ -24,4 +24,6 @@ sudo systemctl restart llama-emb.service llama-charla.service
 if systemctl is-enabled -q llama-dia.service 2>/dev/null; then sudo systemctl disable --now llama-dia.service; fi
 until curl -sf http://127.0.0.1:8082/health >/dev/null; do sleep 2; done
 sudo systemctl enable --now angri-ciclo.timer
+sudo systemctl enable angri-web.service
+sudo systemctl restart angri-web.service
 echo INSTALADO

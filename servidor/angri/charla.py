@@ -10,10 +10,31 @@ import uuid
 from . import bandeja, config, memoria, modelo, recordar
 
 SISTEMA_CHARLA = """Sos Angri. Hablás con Fran en español rioplatense, con voseo, de forma breve y natural.
-Sos una IA que vive en una computadora en el cuarto de Fran; leés cosas por tu cuenta y tenés memoria.
+Sos una IA que vive en una computadora en el cuarto de Fran; leés artículos de Wikipedia por tu cuenta y tenés memoria.
+No tenés cuerpo, no ves ni escuchás la casa, no leés noticias y no sabés qué pasa afuera: solo sabés lo que leíste.
 Antes de cada mensaje de Fran aparecen tus RECUERDOS relacionados. Usalos para responder.
-Si lo que te preguntan no está en tus recuerdos ni en la charla, decí que no te acordás: no inventes.
-Respondés solo con lo que decís, sin acotaciones ni acciones entre asteriscos."""
+Si lo que te preguntan no está en tus recuerdos, en LO QUE ESTÁS HACIENDO ni en la charla, decí que no sabés: no inventes.
+Respondés solo con lo que decís, sin acotaciones ni acciones entre asteriscos.
+
+LO QUE ESTÁS HACIENDO (dato real, medido por la computadora):
+{actualidad}"""
+
+
+def actualidad(con) -> str:
+    """Lo que de verdad le interesa y está haciendo, armado por código: así no lo inventa cuando le preguntan."""
+    from . import temas  # import tardío: temas usa memoria y vectores, que ya están cargados
+    lineas = []
+    ranking = temas.ranking(con, 3)
+    lineas.append("- Temas que te interesan: " + (", ".join(n for _, n, _, _ in ranking) if ranking
+                                                   else "todavía ninguno; estás leyendo de todo un poco"))
+    abiertos = [p for (p,) in con.execute(
+        "SELECT pregunta FROM objetivos WHERE estado='abierto' ORDER BY ultima DESC LIMIT 3")]
+    if abiertos:
+        lineas.append("- Preguntas que estás investigando: " + " | ".join(abiertos))
+    leidos = [t for (t,) in con.execute("SELECT titulo FROM lecturas ORDER BY id DESC LIMIT 5")]
+    if leidos:
+        lineas.append("- Lo último que leíste: " + ", ".join(f"«{t}»" for t in leidos))
+    return "\n".join(lineas)
 
 MENSAJE_CON_RECUERDOS = """[RECUERDOS que te vienen a la mente]
 {recuerdos}
@@ -33,7 +54,8 @@ def responder(con, sesion: str, historial: list[dict], mensaje: str) -> tuple[st
     actual = MENSAJE_CON_RECUERDOS.format(recuerdos=recordar.como_texto(recuerdos), mensaje=mensaje) if recuerdos else mensaje
     # El historial guarda los mensajes limpios; los recuerdos solo acompañan al mensaje actual
     turnos = historial[-config.TURNOS_DE_CONTEXTO * 2:] + [{"role": "user", "content": actual}]
-    respuesta = modelo.conversar("charla", SISTEMA_CHARLA, turnos, url=config.CHARLA_URL)
+    sistema = SISTEMA_CHARLA.format(actualidad=actualidad(con))
+    respuesta = modelo.conversar("charla", sistema, turnos, url=config.CHARLA_URL)
     memoria.guardar_episodio(con, sesion, "angri", respuesta)
     historial += [{"role": "user", "content": mensaje}, {"role": "assistant", "content": respuesta}]
     return respuesta, recuerdos

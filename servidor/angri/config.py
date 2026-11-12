@@ -69,6 +69,9 @@ FALLAS_POR_OBJETIVO = 2        # en 24 h: la investigación se abandona como 'fa
 BANDEJA_DIAS = 7               # lo que tiene más de una semana ya no se cuenta
 BANDEJA_POR_SALUDO = 3         # novedades que cuenta al abrir la charla
 
+# Charla por navegador (web.py), solo en la red de casa
+WEB_PUERTO = int(os.environ.get("ANGRI_WEB_PUERTO", "8080"))
+
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres
 ANCLAJE_MINIMO = 0.5   # fracción de palabras del resumen que tienen que estar en la fuente
