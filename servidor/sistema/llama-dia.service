@@ -1,0 +1,24 @@
+# Modelo de día de Angri: Qwen3.5 2B, siempre prendido.
+# Instalar en /etc/systemd/system/ y activar con: systemctl enable --now llama-dia
+[Unit]
+Description=Angri - modelo de dia (Qwen3.5 2B)
+After=network.target
+
+[Service]
+User=angri
+Group=angri
+ExecStart=/opt/angri/llama/bin/llama-server \
+  -m /opt/angri/modelos/Qwen3.5-2B-Q4_K_M.gguf \
+  --host 127.0.0.1 --port 8080 \
+  -t 4 -c 8192 --jinja \
+  --chat-template-kwargs '{"enable_thinking":false}'
+Restart=always
+RestartSec=5
+# Sin acceso a nada fuera de lo suyo
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

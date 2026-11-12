@@ -409,12 +409,12 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
 - **Sin revisión diaria.** Corre 24/7; la vigilancia es automática.
 
 - **Nombre: Angri.** También es el nombre de la máquina donde vive.
+- **Dos modelos (12 de noviembre):** Qwen3.5 **2B** de día (bucle de curiosidad y charla) y **4B** para el sueño (consolidar, reflexionar, resumen del día). El 0.8B quedó descartado: no copia citas textuales. Ver `pruebas/RESULTADOS-calidad.md`.
 
 **Pendiente**
 - **Fuentes de exposición al azar.** Wikipedia en español, qué portales de noticias, cuáles no.
 - **Cuánta iniciativa.** ¿Solo deja mensajes para cuando Fran vuelva, o también avisa al celular?
 - **Horario de sueño.**
-- **Uno o dos modelos.**
 - **Cuándo activar el reentrenamiento.**
 
 ---
