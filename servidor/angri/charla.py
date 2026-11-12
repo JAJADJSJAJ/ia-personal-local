@@ -47,6 +47,9 @@ def actualidad(con) -> str:
     if descanso := salud.descansando(con):
         plan = f"ahora estás {descanso} porque algo no respondía; después: " + plan
     lineas.append("- Lo que vas a hacer más tarde: " + plan)
+    from . import sueno
+    if ultimo := sueno.ultimo_resumen(con):
+        lineas.append(f"- Tu resumen del día {ultimo[0]} (lo escribiste antes de dormir): {ultimo[1]}")
     leidos = [t for (t,) in con.execute("SELECT titulo FROM lecturas ORDER BY id DESC LIMIT 5")]
     if leidos:
         lineas.append("- Lo último que leíste: " + ", ".join(f"«{t}»" for t in leidos))

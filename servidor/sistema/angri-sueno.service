@@ -1,0 +1,19 @@
+# El sueño de Angri: ordena su memoria una vez por noche. Lo dispara angri-sueno.timer.
+[Unit]
+Description=Angri - dormir y ordenar la memoria
+After=llama-charla.service llama-emb.service
+
+[Service]
+Type=oneshot
+User=angri
+Group=angri
+WorkingDirectory=/opt/angri/codigo
+Environment=ANGRI_DATOS=/var/lib/angri
+ExecStart=/usr/bin/python3 -m angri.sueno
+TimeoutStartSec=1h
+Nice=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/angri

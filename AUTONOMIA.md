@@ -428,6 +428,17 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
 - **Fase D (12 de noviembre): bandeja de mensajes** (`bandeja.py`). El código, no el modelo, decide qué vale la pena contar: respuesta encontrada (3), tema nuevo o falla con descanso (2), investigación dejada o recuperación (1). Al abrir `angri charla` saluda con las 3 más importantes; `novedades` muestra el resto. Lo que tiene más de 7 días ya no se cuenta. El modelo solo redacta, y si agrega datos (anclaje bajo) se usa el texto armado por código.
 - **Charla por navegador** (`web.py`, servicio `angri-web`): `http://angri.local:8080` desde el celular o la PC, con la pestaña "Qué anda haciendo" (temas, investigaciones, diario). Pide una clave que se guarda en el navegador (`angri web` muestra el enlace); systemd solo acepta conexiones de la red local. Usa solo la biblioteca estándar y responde de a un mensaje por vez (unos 20-30 s cada uno).
 - **"¿Qué te interesa?" la hacía inventar** (gatos, el barrio, el clima) porque esa pregunta no trae ningún recuerdo puntual. Ahora la charla recibe siempre, armado por código, lo que de verdad hace: temas, preguntas abiertas y últimas lecturas. Además, el prompt aclara que no ve la casa ni lee noticias.
+- **Fase F (12 de noviembre): sueño** (`sueno.py`, `angri-sueno.timer` a las 04:00; si la PC estaba apagada, duerme al prender). Mientras duerme, el ciclo espera. Pasos, todos decididos por código:
+  1. Copia de seguridad de la memoria; se guardan las últimas 7.
+  2. Repasa las notas viejas con los filtros de hoy.
+  3. Junta notas repetidas de lecturas distintas (coseno ≥ 0,92): queda la más vieja, marcada como "confirmada".
+  4. Olvida las preguntas que nunca investigó, si tienen más de 14 días o hay más de 30 abiertas.
+  5. Poda eventos viejos y rota el log de llamadas.
+  6. Escribe el resumen del día, que se controla por anclaje.
+  7. Optimiza la base, y los domingos además la compacta (VACUUM).
+
+  Nunca borra notas ni charlas: las marca como vencidas. La charla recibe el último resumen, para responder "¿qué hiciste ayer?".
+- **Calibración del umbral de repetidas:** los pares de notas más parecidos daban 0,77 y eran datos distintos (Rumania multipartidista hoy contra partido único antes). Por eso el umbral quedó alto, en 0,92.
 - **El modelo daba vuelta quién hizo qué:** "descubriste un interés por Rumania", cuando el interés era de ella. El anclaje no lo detecta porque las palabras coinciden. Se arregló pidiendo primera persona y rechazando por código verbos en segunda persona ("dejaste", "encontraste"...).
 - **"database is locked":** dos procesos escribiendo a la vez (una prueba y el timer). La conexión ahora espera hasta 60 s.
 

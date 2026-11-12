@@ -1,5 +1,5 @@
 #!/bin/sh
-# Comando para manejar a Angri. Uso: angri [charla [--recuerdos]|web|estado|notas [N]|diario|ciclo|pausa|seguir|log]
+# Comando para manejar a Angri. Uso: angri [charla [--recuerdos]|web|dormir|estado|notas [N]|diario|ciclo|pausa|seguir|log]
 DATOS=/var/lib/angri
 cd /opt/angri/codigo || exit 1
 case "${1:-estado}" in
@@ -8,11 +8,13 @@ case "${1:-estado}" in
   web)    echo "Abrí esto una vez en el celular o la PC (después alcanza con http://angri.local:8080):"
           echo "  http://angri.local:8080/?clave=$(sudo cat $DATOS/web-clave 2>/dev/null)"
           echo "Si angri.local no anda en el celular, usá la IP: http://$(hostname -I | cut -d' ' -f1):8080/?clave=..." ;;
+  dormir) echo "Durmiendo ahora (ordena la memoria; tarda unos minutos)..."; sudo systemctl start angri-sueno.service
+          sudo journalctl -u angri-sueno -n 2 --no-pager -o cat ;;
   notas)  sudo -u angri ANGRI_DATOS=$DATOS python3 -m angri.estado notas "${2:-5}" ;;
   diario) sudo cat "$DATOS/diario/$(date +%F).md" 2>/dev/null || echo "Hoy todavía no escribió nada." ;;
   ciclo)  echo "Corriendo un ciclo ahora..."; sudo systemctl start angri-ciclo.service; sudo journalctl -u angri-ciclo -n 3 --no-pager -o cat ;;
   pausa)  sudo -u angri touch "$DATOS/PAUSA"; echo "Angri en pausa." ;;
   seguir) sudo rm -f "$DATOS/PAUSA"; echo "Angri despierta." ;;
   log)    sudo journalctl -u angri-ciclo -n 20 --no-pager -o short ;;
-  *)      echo "Uso: angri [charla [--recuerdos]|web|estado|notas [N]|diario|ciclo|pausa|seguir|log]" ;;
+  *)      echo "Uso: angri [charla [--recuerdos]|web|dormir|estado|notas [N]|diario|ciclo|pausa|seguir|log]" ;;
 esac

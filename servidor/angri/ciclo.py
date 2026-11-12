@@ -14,7 +14,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from . import bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, temas, vectores, verificar
+from . import bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, sueno, temas, vectores, verificar
 
 _objetivo_en_curso: int | None = None  # para saber qué investigación estaba en marcha si el ciclo falla
 
@@ -257,6 +257,8 @@ def ciclo() -> str:
         return "en pausa"
     if charlando():
         return "Fran está charlando, espero"
+    if sueno.durmiendo():
+        return "durmiendo"
     con = memoria.abrir()
     try:
         if motivo := salud.descansando(con):

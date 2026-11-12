@@ -72,6 +72,17 @@ BANDEJA_POR_SALUDO = 3         # novedades que cuenta al abrir la charla
 # Charla por navegador (web.py), solo en la red de casa
 WEB_PUERTO = int(os.environ.get("ANGRI_WEB_PUERTO", "8080"))
 
+# Fase F: sueño (sueno.py), una vez por noche
+DURMIENDO = DATOS / "DURMIENDO"   # mientras existe, el ciclo no corre
+SUENO_COPIAS = 7                  # copias de la memoria que se guardan
+SUENO_REPETIDA = 0.92             # coseno entre notas de lecturas distintas para juntarlas
+                                  # (calibrado: datos distintos del mismo tema dieron hasta 0,77)
+SUENO_PREGUNTA_DIAS = 14          # una pregunta que nunca investigó se olvida después de esto
+SUENO_PREGUNTAS_MAX = 30          # y si hay más abiertas, se olvidan las más viejas
+SUENO_EVENTOS_DIAS = 60
+SUENO_LOG_MAXIMO = 50 * 1024 * 1024
+SUENO_HECHOS_MAX = 25             # para que el resumen entre en el contexto del modelo
+
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres
 ANCLAJE_MINIMO = 0.5   # fracción de palabras del resumen que tienen que estar en la fuente
