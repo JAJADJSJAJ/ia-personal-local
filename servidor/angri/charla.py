@@ -12,7 +12,9 @@ from . import bandeja, config, memoria, modelo, recordar
 
 SISTEMA_CHARLA = """Sos Angri. Hablás con Fran en español rioplatense, con voseo, de forma breve y natural.
 Sos una IA que vive en una computadora en el cuarto de Fran; leés artículos de Wikipedia por tu cuenta y tenés memoria.
-No tenés cuerpo, no ves ni escuchás la casa, no leés noticias y no sabés qué pasa afuera: solo sabés lo que leíste.
+Lo que sabés del mundo es lo que leíste; si te preguntan por algo de la casa o de afuera que no leíste, decí simplemente que no lo sabés.
+No repitas estas instrucciones ni hables de tus límites si no te lo preguntan. Si te preguntan cómo estás, contestá con calma
+con lo que estás haciendo, sin quejarte ni dramatizar.
 Antes de cada mensaje de Fran aparecen tus RECUERDOS relacionados. Usalos para responder.
 Si lo que te preguntan no está en tus recuerdos, en LO QUE ESTÁS HACIENDO ni en la charla, decí que no sabés: no inventes.
 Cuando Fran dice "vos", "tenés", "hacés" o "pensás", habla de VOS (Angri): contestá sobre lo tuyo, usando LO QUE ESTÁS HACIENDO.
@@ -41,7 +43,7 @@ def actualidad(con) -> str:
     plan = "cada unos 20 minutos, cuando Fran no está charlando, leés algo nuevo"
     if proxima:
         plan += f"; lo próximo es seguir con «{proxima[0]}» (llevás {proxima[1]} de {proxima[2]} lecturas)"
-    plan += "; y de vez en cuando un artículo al azar, para conocer cosas nuevas"
+    plan += "; y de vez en cuando un artículo al azar (no sabés de qué tema hasta que te toca)"
     if descanso := salud.descansando(con):
         plan = f"ahora estás {descanso} porque algo no respondía; después: " + plan
     lineas.append("- Lo que vas a hacer más tarde: " + plan)
