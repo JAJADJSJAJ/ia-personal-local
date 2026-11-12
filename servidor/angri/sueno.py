@@ -19,7 +19,7 @@ from datetime import date, datetime, timedelta
 
 import numpy as np
 
-from . import bandeja, config, memoria, modelo, recordar, verificar
+from . import bandeja, config, memoria, modelo, recordar, reflexion, verificar
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS resumenes (
@@ -205,6 +205,14 @@ def dormir() -> str:
             escribir_diario(f"Antes de dormir: {resumen}")
             bandeja.dejar(con, "resumen", f"Resumen de mi día: {resumen}", 1)
             informe.append("resumen escrito")
+        con.commit()
+        # Fase E: reflexión. Cada paso por separado: si el modelo falla en uno, los otros siguen.
+        for paso in (reflexion.decidir_genero, reflexion.reflexionar_tema, reflexion.reflexionar_quien_soy):
+            try:
+                if r := paso(con):
+                    informe.append(r if paso is not reflexion.decidir_genero else f"decidí mi género: {r}")
+            except OSError:
+                informe.append(f"{paso.__name__}: el modelo no respondió")
         con.commit()
         con.execute("PRAGMA optimize")
         if date.today().weekday() == 6:   # domingo: compactar

@@ -182,6 +182,7 @@ async function cargarEstado() {
     const c = el("div", "tarjeta"); c.append(el("b", "", n), el("span", "chico", t)); cifras.append(c);
   }
   a.append(cifras);
+  if (s.quien_soy) { a.append(el("h2", "", "Quién es (lo escribió Angri)")); a.append(el("div", "tarjeta", s.quien_soy)); }
   a.append(el("h2", "", "Lo que le interesa"));
   if (!s.temas.length) a.append(el("p", "chico", "Todavía no se formó ningún tema."));
   for (const t of s.temas) { const c = el("div", "tarjeta"); c.append(el("div", "", t.nombre), el("div", "chico", `${t.notas} notas · peso ${t.peso}`)); a.append(c); }

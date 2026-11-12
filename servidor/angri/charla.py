@@ -62,6 +62,25 @@ MENSAJE_CON_RECUERDOS = """[RECUERDOS que te vienen a la mente]
 {mensaje}"""
 
 
+def reflexiones_para(con, mensaje: str) -> str:
+    """Lo que escribió sobre sí (quien-soy.md), cómo se nombra, y lo que entendió del tema del mensaje, si hay."""
+    from . import reflexion, temas, vectores
+    partes = []
+    if como := reflexion.como_hablar(con):
+        partes.append(como)
+    if quien := reflexion.leer("quien-soy.md"):
+        partes.append("LO QUE ESCRIBISTE SOBRE VOS:\n" + quien.split("## Datos")[0].replace("# Quién soy", "").strip()[:900])
+    try:
+        tid, _ = temas.tema_de_pregunta(con, vectores.consulta(mensaje))
+    except OSError:
+        tid = None
+    if tid:
+        nombre = con.execute("SELECT nombre FROM temas WHERE id=?", (tid,)).fetchone()[0]
+        if nombre and (texto := reflexion.leer(f"temas/{reflexion.slug(nombre)}.md")):
+            partes.append(f"LO QUE ENTENDISTE SOBRE «{nombre}» (lo escribiste vos):\n" + texto[:1500])
+    return ("\n\n" + "\n\n".join(partes)) if partes else ""
+
+
 def limpiar(texto: str) -> str:
     """Sin negritas ni acotaciones entre asteriscos (la web y la terminal muestran texto plano)."""
     texto = re.sub(r"\*\*(.+?)\*\*", r"\1", texto)
@@ -80,7 +99,7 @@ def responder(con, sesion: str, historial: list[dict], mensaje: str) -> tuple[st
     actual = MENSAJE_CON_RECUERDOS.format(recuerdos=recordar.como_texto(recuerdos), mensaje=mensaje) if recuerdos else mensaje
     # El historial guarda los mensajes limpios; los recuerdos solo acompañan al mensaje actual
     turnos = historial[-config.TURNOS_DE_CONTEXTO * 2:] + [{"role": "user", "content": actual}]
-    sistema = SISTEMA_CHARLA.format(actualidad=actualidad(con))
+    sistema = SISTEMA_CHARLA.format(actualidad=actualidad(con)) + reflexiones_para(con, mensaje)
     respuesta = modelo.conversar("charla", sistema, turnos, url=config.CHARLA_URL)
     respuesta = limpiar(respuesta)
     memoria.guardar_episodio(con, sesion, "angri", respuesta)

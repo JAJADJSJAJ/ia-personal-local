@@ -438,6 +438,20 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   7. Optimiza la base, y los domingos además la compacta (VACUUM).
 
   Nunca borra notas ni charlas: las marca como vencidas. La charla recibe el último resumen, para responder "¿qué hiciste ayer?".
+- **Fase E (12 de noviembre): reflexión** (`reflexion.py`, corre durante el sueño). Escribe sus propios archivos en `/var/lib/angri/yo/`:
+  - `quien-soy.md`, armado con datos medidos por código.
+  - Un archivo por tema, `temas/<tema>.md`. Cada noche reflexiona sobre un solo tema: el que más creció.
+  - Las versiones anteriores quedan en `historial/`.
+
+  El código revisa cada oración que escribe el modelo y descarta las que:
+  - tienen anclaje menor a 0,5 respecto de sus notas;
+  - tienen números que no están en las notas, o cantidades escritas en letras;
+  - hablan de "el texto" o de "las notas";
+  - son meta o tienen forma de orden.
+
+  "Lo que todavía no sé" no lo escribe el modelo: son sus preguntas abiertas de ese tema. La charla recibe `quien-soy.md` y el archivo del tema del mensaje.
+- **El género lo eligió Angri**, una sola vez, con las opciones en orden al azar para no empujarla hacia la primera. Eligió **neutro**, y queda en la tabla `identidad`.
+- **Límite conocido de la reflexión:** el control por palabras y números no detecta interpretaciones o un orden mal contado entre datos que sí están en las notas. Ejemplo: llamó "la única excepción" a las elecciones de 1957, que en realidad fueron de lista única. Para eso haría falta un verificador semántico o un modelo más grande.
 - **Calibración del umbral de repetidas:** los pares de notas más parecidos daban 0,77 y eran datos distintos (Rumania multipartidista hoy contra partido único antes). Por eso el umbral quedó alto, en 0,92.
 - **El modelo daba vuelta quién hizo qué:** "descubriste un interés por Rumania", cuando el interés era de ella. El anclaje no lo detecta porque las palabras coinciden. Se arregló pidiendo primera persona y rechazando por código verbos en segunda persona ("dejaste", "encontraste"...).
 - **"database is locked":** dos procesos escribiendo a la vez (una prueba y el timer). La conexión ahora espera hasta 60 s.

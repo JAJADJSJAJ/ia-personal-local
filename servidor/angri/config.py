@@ -83,6 +83,11 @@ SUENO_EVENTOS_DIAS = 60
 SUENO_LOG_MAXIMO = 50 * 1024 * 1024
 SUENO_HECHOS_MAX = 25             # para que el resumen entre en el contexto del modelo
 
+# Fase E: reflexión (reflexion.py), durante el sueño
+REFLEXION_NOTAS_MAX = 15        # notas de un tema que se le dan para reflexionar (las más nuevas)
+REFLEXION_FRASES_MAX = 8
+REFLEXION_PESO_VIVO = 0.5       # debajo de esto, un tema "se le fue enfriando"
+
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres
 ANCLAJE_MINIMO = 0.5   # fracción de palabras del resumen que tienen que estar en la fuente

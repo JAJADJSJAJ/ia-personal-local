@@ -16,7 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import bandeja, charla, config, memoria, salud, temas
+from . import bandeja, charla, config, memoria, reflexion, salud, temas
 
 PAGINA = Path(__file__).with_name("web.html")
 _turno = threading.Lock()                 # una respuesta del modelo a la vez
@@ -58,6 +58,7 @@ def estado(con) -> dict:
             "SELECT pregunta, estado, respuesta FROM objetivos WHERE estado != 'abierto' ORDER BY ultima DESC LIMIT 5")],
         "mensajes_sin_leer": len(bandeja.pendientes(con)),
         "diario": lineas[-12:][::-1],
+        "quien_soy": (reflexion.leer("quien-soy.md") or "").split("## Datos")[0].replace("# Quién soy", "").strip(),
     }
 
 
