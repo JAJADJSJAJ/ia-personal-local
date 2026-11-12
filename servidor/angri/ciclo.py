@@ -14,7 +14,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from . import bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, sueno, temas, vectores, verificar
+from . import avisos, bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, sueno, temas, vectores, verificar
 
 _objetivo_en_curso: int | None = None  # para saber qué investigación estaba en marcha si el ciclo falla
 
@@ -172,6 +172,15 @@ def ciclo_azar(con) -> tuple[str, int | None]:
 
 # ---------------------------------------------------------------- modo OBJETIVO
 
+def dejar_investigacion(con, pregunta: str):
+    """Al dejar una pregunta sin respuesta, a veces se la hace a Fran. Nunca espera que conteste."""
+    if random.random() < config.PROB_DUDA:
+        bandeja.dejar(con, "duda", f"Estuve buscando «{pregunta}» y no lo encontré en Wikipedia. "
+                                   "¿Vos sabés algo? Si no, no pasa nada.", 2)
+    else:
+        bandeja.dejar(con, "dejado", f"Dejé «{pregunta}» por ahora: no encontré una respuesta clara.", 1)
+
+
 def elegir_articulo(con, titulos: list[str], vector_pregunta) -> dict | None:
     """De los resultados de la búsqueda, el que más se parece a la pregunta (título + comienzo).
 
@@ -224,7 +233,7 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
             estado = "agotado"
         if estado:
             escribir_diario(f"Dejé de buscar *{pregunta}*: no encuentro nada que la responda.")
-            bandeja.dejar(con, "dejado", f"Dejé de buscar «{pregunta}»: no encontré nada que la responda.", 1)
+            dejar_investigacion(con, pregunta)
             con.commit()
         return f"objetivo {oid}: sin resultados para {probadas} ({estado or 'sigue abierto'})", None
 
@@ -244,7 +253,7 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
                       else f"Encontré respuesta a «{pregunta}».", 3)
     elif estado in ("agotado", "sin_presupuesto"):
         escribir_diario(f"Dejé *{pregunta}* por ahora: no encontré una respuesta clara.")
-        bandeja.dejar(con, "dejado", f"Dejé «{pregunta}» por ahora: no encontré una respuesta clara.", 1)
+        dejar_investigacion(con, pregunta)
     if tema and tema["nombre"] and tema.get("recien_nombrado"):
         bandeja.dejar(con, "tema", f"Me di cuenta de que me interesa un tema: {tema['nombre']}.", 2)
     return f"objetivo {oid}: {art['titulo']} ({estado or 'sigue abierto'})", tema["tema_id"] if tema else None
@@ -275,6 +284,7 @@ def ciclo() -> str:
                     (memoria.ahora(), modo, tema_id, resultado))
         con.commit()
         salud.anotar_recuperacion(con, fallas_previas, escribir_diario)
+        avisos.avisar(con)
         return f"[{modo}] {resultado}"
     finally:
         con.close()

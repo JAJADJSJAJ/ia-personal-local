@@ -452,6 +452,13 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   "Lo que todavía no sé" no lo escribe el modelo: son sus preguntas abiertas de ese tema. La charla recibe `quien-soy.md` y el archivo del tema del mensaje.
 - **El género lo eligió Angri**, una sola vez, con las opciones en orden al azar para no empujarla hacia la primera. Eligió **neutro**, y queda en la tabla `identidad`.
 - **Límite conocido de la reflexión:** el control por palabras y números no detecta interpretaciones o un orden mal contado entre datos que sí están en las notas. Ejemplo: llamó "la única excepción" a las elecciones de 1957, que en realidad fueron de lista única. Para eso haría falta un verificador semántico o un modelo más grande.
+- **Avisos al celular (12 de noviembre)** (`avisos.py`). Se usa el servidor público ntfy.sh: lo eligió Fran, porque lo que sale es solo el texto del aviso ("una IA pequeña viviendo", nada secreto).
+  - **Canal:** tiene un nombre largo al azar, guardado en `/var/lib/angri/ntfy-canal`.
+  - **Qué se avisa:** solo una respuesta encontrada, un tema nuevo, su identidad o una duda para Fran. Las fallas y los resúmenes no se avisan.
+  - **Topes, decididos por código:** 2 por día, separados por al menos 3 horas, y solo entre las 10 y las 22.
+  - **Ningún aviso espera respuesta.** Al dejar una investigación sin respuesta, la mitad de las veces le pregunta a Fran: "¿vos sabés algo? Si no, no pasa nada".
+  - Lo que ya se contó en la charla no se vuelve a avisar.
+- **Su propia naturaleza la descubre sola:** Fran prefirió no darle un archivo que le explique qué es. Las preguntas que se haga sobre sí ("¿qué es la memoria?") pasan el filtro y se investigan como cualquier otra.
 - **Fase G (12 de noviembre): vectores de control, probados pero no activados.**
   - Antes de tocar nada se midió el voseo con el prompt real de la charla (`pruebas/medir-voseo.py`): dio 94% de voseo, con 1 respuesta con tuteo de 24.
   - Con `llama-cvector-generator` (método mean, 30 pares rioplatense/peninsular, `sistema/vectores/pares-voseo.py`) se generó el vector: tardó 2,5 minutos.

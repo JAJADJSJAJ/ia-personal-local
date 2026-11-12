@@ -88,6 +88,15 @@ REFLEXION_NOTAS_MAX = 15        # notas de un tema que se le dan para reflexiona
 REFLEXION_FRASES_MAX = 8
 REFLEXION_PESO_VIVO = 0.5       # debajo de esto, un tema "se le fue enfriando"
 
+# Avisos al celular (avisos.py) por el servidor público ntfy.sh (Fran lo eligió: sale solo el texto del aviso)
+AVISOS_ACTIVOS = os.environ.get("ANGRI_AVISOS", "1") == "1"
+NTFY_URL = "https://ntfy.sh"
+AVISOS_POR_DIA = 2
+AVISOS_SEPARACION_HORAS = 3
+AVISOS_DESDE_HORA = 10          # nunca de noche ni muy temprano
+AVISOS_HASTA_HORA = 22
+PROB_DUDA = 0.5                 # al dejar una investigación sin respuesta, a veces le pregunta a Fran
+
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres
 ANCLAJE_MINIMO = 0.5   # fracción de palabras del resumen que tienen que estar en la fuente
