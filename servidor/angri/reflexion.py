@@ -107,8 +107,8 @@ def _guardar(archivo, contenido: str):
         viejo = archivo.read_text(encoding="utf-8")
         if viejo.strip():
             hist = _yo() / "historial" / f"{archivo.stem}-{date.today():%Y-%m-%d}.md"
-            hist.write_text(viejo, encoding="utf-8")
-    archivo.write_text(contenido, encoding="utf-8")
+            memoria.escribir_seguro(hist, viejo)
+    memoria.escribir_seguro(archivo, contenido)
 
 
 def leer(nombre_relativo: str) -> str | None:

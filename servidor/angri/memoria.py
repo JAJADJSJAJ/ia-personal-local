@@ -76,6 +76,31 @@ def abrir() -> sqlite3.Connection:
     return con
 
 
+def escribir_seguro(archivo, texto: str) -> None:
+    """Escribe un archivo de forma que un corte de luz no lo deje vacío ni cortado.
+
+    Escribe en un temporal al lado, lo fuerza al disco y recién ahí lo pone en lugar del original
+    (os.replace es atómico): después de un corte queda la versión vieja entera o la nueva entera.
+    """
+    import os
+    from pathlib import Path
+    archivo = Path(archivo)
+    temporal = archivo.with_name(f".{archivo.name}.tmp")
+    with open(temporal, "w", encoding="utf-8") as f:
+        f.write(texto)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(temporal, archivo)
+    try:  # que el cambio de nombre también llegue al disco (en Linux; en Windows no hace falta)
+        fd = os.open(archivo.parent, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
+
+
 def ahora() -> str:
     return datetime.now().isoformat(timespec="seconds")
 

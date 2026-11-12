@@ -26,8 +26,8 @@ SESION_VENCE = 3600
 
 def clave() -> str:
     archivo = config.DATOS / "web-clave"
-    if not archivo.exists():
-        archivo.write_text(secrets.token_urlsafe(12))
+    if not archivo.exists() or not archivo.read_text().strip():
+        memoria.escribir_seguro(archivo, secrets.token_urlsafe(12))
         archivo.chmod(0o600)
     return archivo.read_text().strip()
 

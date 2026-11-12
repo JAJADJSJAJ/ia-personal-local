@@ -488,6 +488,7 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
 
   Las notas rechazadas se miran en cada ciclo; el resto, cada noche al dormir. El resultado queda en `/var/lib/angri/salud.md` (`angri salud`).
   - Primera medición: 35% de notas rechazadas, 0% de preguntas repetidas, 11 temas distintos y el más visitado con el 23% de los ciclos. Todo normal.
+- **Cortes de luz:** todos los archivos propios (`yo/`, `salud.md`, las claves y las copias de la base) se escriben primero en un temporal y después se reemplazan de forma atómica (`memoria.escribir_seguro`). Un corte deja la versión vieja entera o la nueva entera, nunca un archivo a medias. La base ya estaba protegida con WAL y `synchronous=FULL`. Falta de parte de Fran poner en la BIOS "Restore on AC Power Loss" en "Power On".
 - **El instalador reiniciaba el modelo siempre**, y eso cortaba el ciclo que estuviera corriendo: hubo 3 "fallas" el 12/11, todas en el momento de reinstalar. Ahora solo lo reinicia si cambió su servicio.
 - **Calibración del umbral de repetidas:** los pares de notas más parecidos daban 0,77 y eran datos distintos (Rumania multipartidista hoy contra partido único antes). Por eso el umbral quedó alto, en 0,92.
 - **El modelo daba vuelta quién hizo qué:** "descubriste un interés por Rumania", cuando el interés era de ella. El anclaje no lo detecta porque las palabras coinciden. Se arregló pidiendo primera persona y rechazando por código verbos en segunda persona ("dejaste", "encontraste"...).

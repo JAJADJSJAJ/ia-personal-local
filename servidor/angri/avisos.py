@@ -25,8 +25,8 @@ TITULOS = {"respuesta": "Encontré algo", "tema": "Algo me empezó a interesar",
 
 def canal() -> str:
     archivo = config.DATOS / "ntfy-canal"
-    if not archivo.exists():
-        archivo.write_text("angri-" + secrets.token_urlsafe(18).replace("_", "x").replace("-", "y"))
+    if not archivo.exists() or not archivo.read_text().strip():
+        memoria.escribir_seguro(archivo, "angri-" + secrets.token_urlsafe(18).replace("_", "x").replace("-", "y"))
         archivo.chmod(0o600)
     return archivo.read_text().strip()
 

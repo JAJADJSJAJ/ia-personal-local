@@ -187,4 +187,4 @@ def escribir_salud(con, n, p, t, r, e, acciones):
     lineas += [f"- **{c}** hasta {h[:16].replace('T', ' ')}: {m}" for c, _, h, m in vig] or ["- Ninguno: todo normal."]
     if acciones:
         lineas += ["", "## Lo que hizo esta vez", ""] + [f"- {a}" for a in acciones]
-    (config.DATOS / "salud.md").write_text("\n".join(lineas) + "\n", encoding="utf-8")
+    memoria.escribir_seguro(config.DATOS / "salud.md", "\n".join(lineas) + "\n")

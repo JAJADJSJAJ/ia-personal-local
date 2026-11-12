@@ -11,6 +11,7 @@ Mientras duerme, el ciclo no corre. Los pasos los decide el código, en este ord
 Nunca borra notas ni charlas: vencer es marcar, no borrar.
 """
 import gzip
+import os
 import shutil
 import sqlite3
 import sys
@@ -60,10 +61,13 @@ def copia(con) -> str:
     carpeta = config.DATOS / "copias"
     carpeta.mkdir(exist_ok=True)
     destino = carpeta / f"memoria-{date.today():%Y-%m-%d}.db"
-    dst = sqlite3.connect(destino)
+    temporal = destino.with_name(f".{destino.name}.tmp")
+    temporal.unlink(missing_ok=True)
+    dst = sqlite3.connect(temporal)
     with dst:
         con.backup(dst)   # copia consistente aunque haya WAL
     dst.close()
+    os.replace(temporal, destino)   # si se corta la luz a mitad de la copia, no queda una copia rota con nombre válido
     viejas = sorted(carpeta.glob("memoria-*.db"))[: -config.SUENO_COPIAS]
     for v in viejas:
         v.unlink()
