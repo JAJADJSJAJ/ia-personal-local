@@ -1,0 +1,11 @@
+# Despierta a Angri cada ~20 minutos, con algo de azar para que no sea un reloj.
+[Unit]
+Description=Angri - latido (cada ~20 minutos)
+
+[Timer]
+OnBootSec=3min
+OnUnitInactiveSec=20min
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

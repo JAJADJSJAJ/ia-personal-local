@@ -1,0 +1,22 @@
+# Un ciclo de curiosidad de Angri. Lo dispara angri-ciclo.timer.
+[Unit]
+Description=Angri - un ciclo de curiosidad
+After=network-online.target llama-dia.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=angri
+Group=angri
+WorkingDirectory=/opt/angri/codigo
+Environment=ANGRI_DATOS=/var/lib/angri
+ExecStart=/usr/bin/python3 -m angri.ciclo
+# Tope de tiempo por ciclo: si se pasa, se corta
+TimeoutStartSec=20min
+Nice=5
+# Solo puede escribir en su carpeta
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/angri
