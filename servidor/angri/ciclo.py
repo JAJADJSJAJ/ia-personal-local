@@ -14,7 +14,9 @@ import sys
 import traceback
 from datetime import datetime
 
-from . import config, fuentes, memoria, modelo, objetivos, recordar, temas, vectores, verificar
+from . import config, fuentes, memoria, modelo, objetivos, recordar, salud, temas, vectores, verificar
+
+_objetivo_en_curso: int | None = None  # para saber qué investigación estaba en marcha si el ciclo falla
 
 SISTEMA_NOTA = (
     "Sos Angri. Tomás notas de lo que leés, en español. Una nota cuenta solo lo que dice el texto: "
@@ -196,6 +198,8 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
     if obj is None:
         return ciclo_azar(con)
     oid, pregunta, gastado, presupuesto, _ = obj
+    global _objetivo_en_curso
+    _objetivo_en_curso = oid
     if nuevo:
         escribir_diario(f"Decidí investigar algo que me quedó dando vueltas: *{pregunta}*")
 
@@ -247,13 +251,11 @@ def ciclo() -> str:
         return "Fran está charlando, espero"
     con = memoria.abrir()
     try:
-        try:
-            recordar.indexar_pendientes(con)
-            asignar_temas_pendientes(con)
-        except OSError:
-            memoria.evento(con, "sin_embeddings")
-            con.commit()
-            return "el servicio de embeddings no responde"
+        if motivo := salud.descansando(con):
+            return motivo
+        fallas_previas = len(salud.fallas_seguidas(con))
+        recordar.indexar_pendientes(con)   # si los embeddings no responden, falla y salud.py lo maneja
+        asignar_temas_pendientes(con)
         if memoria.lecturas_hoy(con) >= config.PAGINAS_POR_DIA:
             return "presupuesto de lecturas agotado por hoy"
 
@@ -262,6 +264,7 @@ def ciclo() -> str:
         con.execute("INSERT INTO ciclos (fecha, modo, tema_id, resultado) VALUES (?, ?, ?, ?)",
                     (memoria.ahora(), modo, tema_id, resultado))
         con.commit()
+        salud.anotar_recuperacion(con, fallas_previas, escribir_diario)
         return f"[{modo}] {resultado}"
     finally:
         con.close()
@@ -273,8 +276,7 @@ def main():
     except Exception as e:  # el ciclo nunca decide si seguir vivo: falla, se anota, y el timer sigue
         try:
             con = memoria.abrir()
-            memoria.evento(con, "error", f"{type(e).__name__}: {e}")
-            con.commit()
+            salud.registrar_falla(con, e, _objetivo_en_curso, escribir_diario)
             con.close()
         finally:
             traceback.print_exc()

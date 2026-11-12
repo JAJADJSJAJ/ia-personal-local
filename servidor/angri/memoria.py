@@ -66,7 +66,8 @@ CREATE TABLE IF NOT EXISTS ciclos (
 
 def abrir() -> sqlite3.Connection:
     config.DATOS.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(config.BASE)
+    # Si otro proceso (la charla, una prueba) está escribiendo, espera en vez de fallar.
+    con = sqlite3.connect(config.BASE, timeout=60)
     # Seguro ante cortes de luz (ver INVESTIGACION.md, sección 9)
     con.execute("PRAGMA journal_mode=WAL")
     con.execute("PRAGMA synchronous=FULL")

@@ -78,7 +78,7 @@ _PREGUNTA_PERSONAL = re.compile(
 
 def pregunta_investigable(texto: str) -> bool:
     """Filtro por código: descarta preguntas dirigidas a ella misma o sin un tema concreto."""
-    if _PREGUNTA_PERSONAL.search(texto):
+    if _PREGUNTA_PERSONAL.search(texto) or es_pregunta_meta(texto):
         return False
     return len(re.findall(r"\w{4,}", texto)) >= 3
 
@@ -121,10 +121,27 @@ def separar_resumen_y_cita(respuesta: str) -> tuple[str, str | None]:
     return "\n".join(resumen).strip(), cita
 
 
+_PREGUNTA_META = re.compile(
+    r"\b(la|esa|esta|tu|mi|una) nota\b"
+    r"|\b(el|este|ese) (texto|art[ií]culo|fragmento|p[aá]rrafo)\b"
+    r"|\bse (podr[ií]a|deber[ií]a) haber (incluido|agregado|mencionado|puesto)"
+    r"|\bsin contradecir",
+    re.IGNORECASE,
+)
+
+
+def es_pregunta_meta(texto: str) -> bool:
+    """Una pregunta sobre su propia nota o el texto ('¿qué se podría haber incluido en esa nota?')
+    no es una pregunta sobre el mundo: no hay nada que buscar."""
+    return bool(_PREGUNTA_META.search(texto))
+
+
 def pregunta_valida(texto: str) -> str | None:
-    """Una sola pregunta, corta, que termina en signo de pregunta."""
+    """Una sola pregunta, corta, que termina en signo de pregunta y es sobre el mundo."""
     linea = texto.strip().splitlines()[0].strip() if texto.strip() else ""
     linea = linea.strip("*\"' ")
     if not linea.endswith("?") or len(linea) > 200 or len(linea) < 10:
+        return None
+    if es_pregunta_meta(linea):
         return None
     return linea

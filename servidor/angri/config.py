@@ -59,6 +59,12 @@ CANDIDATOS_POR_BUSQUEDA = 3    # artículos que se miran antes de elegir cuál l
 ARTICULO_SIMILITUD_MINIMA = 0.35  # coseno pregunta ↔ artículo para que valga la pena leerlo
 PARRAFOS_POR_LECTURA = 4      # en búsquedas, se leen los párrafos más relacionados con la pregunta
 
+# Fallas (salud.py): no reintentar para siempre ni trabarse en una investigación que rompe
+FALLAS_ANTES_DE_ESPERAR = 3    # fallas seguidas antes del primer descanso
+ESPERA_INICIAL_MIN = 60        # el descanso se duplica con cada falla nueva...
+ESPERA_MAXIMA_MIN = 360        # ...sin pasar de 6 horas
+FALLAS_POR_OBJETIVO = 2        # en 24 h: la investigación se abandona como 'fallido'
+
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres
 ANCLAJE_MINIMO = 0.5   # fracción de palabras del resumen que tienen que estar en la fuente

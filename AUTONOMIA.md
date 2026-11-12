@@ -423,6 +423,9 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
 - **De los resultados se lee el que más se parece a la pregunta**, no el primero; si ninguno se parece (coseno < 0,35), no se lee nada.
 - **Notas "meta" ("el texto no menciona X") se descartan:** no son datos del mundo.
 - **Las notas cuentan datos, no lecciones.** "Escribí qué aprendiste" producía moralejas inventadas; se pide "contá qué dice el texto". Además se controla por código que las palabras del resumen estén en la fuente (anclaje ≥ 50%).
+- **Cuando algo falla, descansa en vez de insistir** (`salud.py`). Tras 3 fallas seguidas espera 1 h, después 2, 4, hasta 6 h; un ciclo bueno vuelve al ritmo normal. Si Wikipedia responde 429 (demasiados pedidos), descansa desde la primera vez; pasó de verdad el 12/11. Una investigación que rompe el código 2 veces en 24 h se abandona como "fallido"; si la falla es de internet o del modelo, no cuenta contra ella. Todo queda en el diario. El tope de 60 páginas por día solo cuenta lecturas guardadas: las fallas no lo gastan.
+- **Preguntas "meta" se descartan** ("¿qué se podría haber incluido en esa nota?"): hablan de su nota, no del mundo.
+- **"database is locked":** dos procesos escribiendo a la vez (una prueba y el timer). La conexión ahora espera hasta 60 s.
 
 **Pendiente**
 - **Fuentes de exposición al azar.** Wikipedia en español, qué portales de noticias, cuáles no.
