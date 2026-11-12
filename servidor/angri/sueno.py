@@ -19,7 +19,7 @@ from datetime import date, datetime, timedelta
 
 import numpy as np
 
-from . import bandeja, config, memoria, modelo, recordar, reflexion, verificar
+from . import bandeja, config, memoria, modelo, recordar, reflexion, verificar, vigilancia
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS resumenes (
@@ -210,13 +210,25 @@ def dormir() -> str:
             informe.append("resumen escrito")
         con.commit()
         # Fase E: reflexión. Cada paso por separado: si el modelo falla en uno, los otros siguen.
-        for paso in (reflexion.decidir_genero, reflexion.reflexionar_tema, reflexion.reflexionar_quien_soy):
+        # Si la vigilancia vio que lo que escribe sobre sí ya casi no cambia, descansa de reflexionar unos días.
+        pasos = [reflexion.decidir_genero]
+        if vigilancia.ajuste(con, "pausa_reflexion"):
+            informe.append("sin reflexión: pausa puesta por la vigilancia")
+        else:
+            pasos += [reflexion.reflexionar_tema, reflexion.reflexionar_quien_soy]
+        for paso in pasos:
             try:
                 if r := paso(con):
                     informe.append(r if paso is not reflexion.decidir_genero else f"decidí mi género: {r}")
             except OSError:
                 informe.append(f"{paso.__name__}: el modelo no respondió")
         con.commit()
+        # Vigilancia: al final, para que mida también la reflexión de esta noche. Escribe salud.md.
+        try:
+            acciones = vigilancia.vigilar(con)
+            informe.append("vigilancia: " + (", ".join(acciones) if acciones else "todo normal"))
+        except OSError:
+            informe.append("vigilancia: no pudo medir todo (embeddings)")
         con.execute("PRAGMA optimize")
         if date.today().weekday() == 6:   # domingo: compactar
             con.execute("VACUUM")

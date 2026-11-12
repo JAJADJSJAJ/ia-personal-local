@@ -14,7 +14,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from . import avisos, bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, sueno, temas, vectores, verificar
+from . import avisos, bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, sueno, temas, vectores, verificar, vigilancia
 
 _objetivo_en_curso: int | None = None  # para saber qué investigación estaba en marcha si el ciclo falla
 
@@ -127,8 +127,12 @@ def elegir_modo(con) -> str:
         "SELECT tema_id FROM ciclos ORDER BY id DESC LIMIT ?", (config.SATURACION,))]
     if len(ultimos) == config.SATURACION and ultimos[0] is not None and len(set(ultimos)) == 1:
         return "azar"  # saturación: demasiados ciclos seguidos en lo mismo
+    if vigilancia.ajuste(con, "solo_azar"):
+        return "azar"  # la vigilancia vio muchas preguntas repetidas: un día de cambio de aire
     n_temas = con.execute("SELECT COUNT(*) FROM temas WHERE nombre IS NOT NULL").fetchone()[0]
     prob = min(config.PROB_OBJETIVO_BASE + 0.05 * n_temas, config.PROB_OBJETIVO_MAX)
+    if (baja := vigilancia.ajuste(con, "prob_objetivo")) is not None:
+        prob = min(prob, baja)  # un tema se estaba quedando con todo: más azar unos días
     hay_preguntas = con.execute("SELECT COUNT(*) FROM preguntas WHERE estado='abierta'").fetchone()[0] > 0
     if (objetivos.abiertos(con) or hay_preguntas) and random.random() < prob:
         return "objetivo"
@@ -272,6 +276,8 @@ def ciclo() -> str:
     try:
         if motivo := salud.descansando(con):
             return motivo
+        if vigilancia.ajuste(con, "pausa_lectura"):
+            return "pausa de lectura (la vigilancia vio demasiadas notas rechazadas)"
         fallas_previas = len(salud.fallas_seguidas(con))
         recordar.indexar_pendientes(con)   # si los embeddings no responden, falla y salud.py lo maneja
         asignar_temas_pendientes(con)
@@ -284,6 +290,7 @@ def ciclo() -> str:
                     (memoria.ahora(), modo, tema_id, resultado))
         con.commit()
         salud.anotar_recuperacion(con, fallas_previas, escribir_diario)
+        vigilancia.vigilar_rapido(con)
         avisos.avisar(con)
         return f"[{modo}] {resultado}"
     finally:

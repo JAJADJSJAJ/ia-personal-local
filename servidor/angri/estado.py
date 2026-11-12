@@ -1,7 +1,7 @@
 """Estado de Angri: contadores medidos por código y las últimas líneas del diario."""
 from datetime import date, timedelta
 
-from . import bandeja, config, memoria, salud, temas
+from . import bandeja, config, memoria, salud, temas, vigilancia
 
 
 def main():
@@ -22,6 +22,8 @@ def main():
     abiertas = contar("SELECT COUNT(*) FROM preguntas WHERE estado='abierta'")
     print(f"Preguntas     abiertas {abiertas:>4}")
     print(f"Mensajes para vos sin leer {len(bandeja.pendientes(con)):>3}   (se los cuenta al abrir 'angri charla')")
+    for clave, _, hasta, motivo in vigilancia.vigentes(con):
+        print(f"Vigilancia: {clave} hasta {hasta[11:16]} ({motivo})")
     ranking = temas.ranking(con, 5)
     if ranking:
         print("\nLo que le interesa ahora (temas que se formaron solos):")

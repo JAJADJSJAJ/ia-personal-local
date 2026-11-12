@@ -14,13 +14,18 @@ sudo chmod -R a+rX /opt/angri/codigo
 dpkg -s python3-numpy >/dev/null 2>&1 || sudo DEBIAN_FRONTEND=noninteractive apt-get -qq -y install python3-numpy >/dev/null
 
 sudo install -d -o angri -g angri -m 750 /var/lib/angri
+# Los modelos se reinician solo si cambió su servicio: reiniciarlos siempre cortaba el ciclo que estaba corriendo.
+REINICIAR=""
+for s in llama-emb llama-charla; do
+  cmp -s "$D/sistema/$s.service" "/etc/systemd/system/$s.service" || REINICIAR="$REINICIAR $s.service"
+done
 sudo install -m 644 "$D/sistema/angri-ciclo.service" "$D/sistema/angri-ciclo.timer" \
   "$D/sistema/llama-emb.service" "$D/sistema/llama-charla.service" "$D/sistema/angri-web.service" \
   "$D/sistema/angri-sueno.service" "$D/sistema/angri-sueno.timer" /etc/systemd/system/
 sudo install -m 755 "$D/sistema/angri" /usr/local/bin/angri
 sudo systemctl daemon-reload
 sudo systemctl enable --now llama-emb.service llama-charla.service
-sudo systemctl restart llama-emb.service llama-charla.service
+if [ -n "$REINICIAR" ]; then sudo systemctl restart $REINICIAR; fi
 # El 2B ya no se usa: un solo modelo (4B) para todo
 if systemctl is-enabled -q llama-dia.service 2>/dev/null; then sudo systemctl disable --now llama-dia.service; fi
 until curl -sf http://127.0.0.1:8082/health >/dev/null; do sleep 2; done

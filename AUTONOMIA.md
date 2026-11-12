@@ -476,6 +476,19 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   - Con `llama-cvector-generator` (método mean, 30 pares rioplatense/peninsular, `sistema/vectores/pares-voseo.py`) se generó el vector: tardó 2,5 minutos.
   - Fran aclaró que el voseo no es prioridad: importa más que no alucine, que sea inteligente y que sea humana. Como ya voseaba casi siempre y un vector puede volver al modelo menos preciso, no se activó.
   - Queda el método por si hace falta otro rasgo de estilo.
+- **Fase C2 (12 de noviembre): vigilancia automática** (`vigilancia.py`). Mide cosas contables, sin preguntarle al modelo, y si algo se pasa pone un ajuste que vence solo:
+
+  | Si pasa esto | Ajuste |
+  |---|---|
+  | Más del 70% de notas rechazadas en 12 h | Pausa de lectura por 6 h, y mensaje a Fran |
+  | Más del 50% de preguntas repetidas en 2 días | Un día solo de lecturas al azar |
+  | Un tema se queda con más del 60% de los ciclos de la semana | La probabilidad de seguir sus preguntas baja a 15% por 3 días |
+  | `quien-soy.md` casi igual (coseno > 0,97) 3 noches seguidas | Pausa de reflexiones por 3 días |
+  | La base pasa de 500 MB o quedan menos de 10 GB libres | Mensaje a Fran |
+
+  Las notas rechazadas se miran en cada ciclo; el resto, cada noche al dormir. El resultado queda en `/var/lib/angri/salud.md` (`angri salud`).
+  - Primera medición: 35% de notas rechazadas, 0% de preguntas repetidas, 11 temas distintos y el más visitado con el 23% de los ciclos. Todo normal.
+- **El instalador reiniciaba el modelo siempre**, y eso cortaba el ciclo que estuviera corriendo: hubo 3 "fallas" el 12/11, todas en el momento de reinstalar. Ahora solo lo reinicia si cambió su servicio.
 - **Calibración del umbral de repetidas:** los pares de notas más parecidos daban 0,77 y eran datos distintos (Rumania multipartidista hoy contra partido único antes). Por eso el umbral quedó alto, en 0,92.
 - **El modelo daba vuelta quién hizo qué:** "descubriste un interés por Rumania", cuando el interés era de ella. El anclaje no lo detecta porque las palabras coinciden. Se arregló pidiendo primera persona y rechazando por código verbos en segunda persona ("dejaste", "encontraste"...).
 - **"database is locked":** dos procesos escribiendo a la vez (una prueba y el timer). La conexión ahora espera hasta 60 s.

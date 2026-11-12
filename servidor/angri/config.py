@@ -103,6 +103,21 @@ DUDA_SIMILITUD_CONTEXTO = 0.20  # coseno mensaje ↔ duda si la duda fue lo últ
 DUDA_SIMILITUD = 0.40           # si no estaba en la charla, tiene que parecerse bastante
 PROB_DUDA = 0.5               # al dejar una investigación sin respuesta, a veces le pregunta a Fran
 
+# Vigilancia automática (vigilancia.py). Umbrales iniciales: se ajustan con los datos de la primera semana.
+VIG_NOTAS_HORAS = 12
+VIG_NOTAS_MINIMO = 8            # no se juzga con menos notas que esto
+VIG_RECHAZO_MAXIMO = 0.7        # el primer día rechazó ~36%: 70% ya es que algo anda mal
+VIG_PAUSA_LECTURA_HORAS = 6
+VIG_PREGUNTAS_MINIMO = 6
+VIG_REPETIDAS_MAXIMO = 0.5
+VIG_TEMAS_MINIMO = 15           # ciclos con tema en la semana para juzgar la concentración
+VIG_CUOTA_MAXIMA = 0.6
+VIG_PROB_OBJETIVO_BAJA = 0.15   # con el ajuste puesto, la probabilidad de seguir sus preguntas baja a esto
+VIG_REFLEXION_NOCHES = 3
+VIG_REFLEXION_PARECIDO = 0.97
+VIG_BASE_MAXIMA_MB = 500
+VIG_DISCO_MINIMO_GB = 10
+
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres
 ANCLAJE_MINIMO = 0.5   # fracción de palabras del resumen que tienen que estar en la fuente

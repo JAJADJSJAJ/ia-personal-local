@@ -1,5 +1,5 @@
 #!/bin/sh
-# Comando para manejar a Angri. Uso: angri [charla [--recuerdos]|web|avisos [probar]|dormir|estado|notas [N]|diario|ciclo|pausa|seguir|log]
+# Comando para manejar a Angri. Uso: angri [charla [--recuerdos]|web|avisos [probar]|dormir|salud|estado|notas [N]|diario|ciclo|pausa|seguir|log]
 DATOS=/var/lib/angri
 cd /opt/angri/codigo || exit 1
 case "${1:-estado}" in
@@ -11,11 +11,12 @@ case "${1:-estado}" in
   dormir) echo "Durmiendo ahora (ordena la memoria; tarda unos minutos)..."; sudo systemctl start angri-sueno.service
           sudo journalctl -u angri-sueno -n 2 --no-pager -o cat ;;
   avisos) shift; sudo -u angri ANGRI_DATOS=$DATOS python3 -m angri.avisos "$@" ;;
+  salud)  sudo cat "$DATOS/salud.md" 2>/dev/null || echo "Todavía no hay salud.md: se escribe cada noche al dormir." ;;
   notas)  sudo -u angri ANGRI_DATOS=$DATOS python3 -m angri.estado notas "${2:-5}" ;;
   diario) sudo cat "$DATOS/diario/$(date +%F).md" 2>/dev/null || echo "Hoy todavía no escribió nada." ;;
   ciclo)  echo "Corriendo un ciclo ahora..."; sudo systemctl start angri-ciclo.service; sudo journalctl -u angri-ciclo -n 3 --no-pager -o cat ;;
   pausa)  sudo -u angri touch "$DATOS/PAUSA"; echo "Angri en pausa." ;;
   seguir) sudo rm -f "$DATOS/PAUSA"; echo "Angri despierta." ;;
   log)    sudo journalctl -u angri-ciclo -n 20 --no-pager -o short ;;
-  *)      echo "Uso: angri [charla [--recuerdos]|web|avisos [probar]|dormir|estado|notas [N]|diario|ciclo|pausa|seguir|log]" ;;
+  *)      echo "Uso: angri [charla [--recuerdos]|web|avisos [probar]|dormir|salud|estado|notas [N]|diario|ciclo|pausa|seguir|log]" ;;
 esac
