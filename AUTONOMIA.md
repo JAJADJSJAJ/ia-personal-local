@@ -452,6 +452,11 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   "Lo que todavía no sé" no lo escribe el modelo: son sus preguntas abiertas de ese tema. La charla recibe `quien-soy.md` y el archivo del tema del mensaje.
 - **El género lo eligió Angri**, una sola vez, con las opciones en orden al azar para no empujarla hacia la primera. Eligió **neutro**, y queda en la tabla `identidad`.
 - **Límite conocido de la reflexión:** el control por palabras y números no detecta interpretaciones o un orden mal contado entre datos que sí están en las notas. Ejemplo: llamó "la única excepción" a las elecciones de 1957, que en realidad fueron de lista única. Para eso haría falta un verificador semántico o un modelo más grande.
+- **Fase G (12 de noviembre): vectores de control, probados pero no activados.**
+  - Antes de tocar nada se midió el voseo con el prompt real de la charla (`pruebas/medir-voseo.py`): dio 94% de voseo, con 1 respuesta con tuteo de 24.
+  - Con `llama-cvector-generator` (método mean, 30 pares rioplatense/peninsular, `sistema/vectores/pares-voseo.py`) se generó el vector: tardó 2,5 minutos.
+  - Fran aclaró que el voseo no es prioridad: importa más que no alucine, que sea inteligente y que sea humana. Como ya voseaba casi siempre y un vector puede volver al modelo menos preciso, no se activó.
+  - Queda el método por si hace falta otro rasgo de estilo.
 - **Calibración del umbral de repetidas:** los pares de notas más parecidos daban 0,77 y eran datos distintos (Rumania multipartidista hoy contra partido único antes). Por eso el umbral quedó alto, en 0,92.
 - **El modelo daba vuelta quién hizo qué:** "descubriste un interés por Rumania", cuando el interés era de ella. El anclaje no lo detecta porque las palabras coinciden. Se arregló pidiendo primera persona y rechazando por código verbos en segunda persona ("dejaste", "encontraste"...).
 - **"database is locked":** dos procesos escribiendo a la vez (una prueba y el timer). La conexión ahora espera hasta 60 s.
