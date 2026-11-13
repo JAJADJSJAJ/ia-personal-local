@@ -278,8 +278,8 @@ def ciclo() -> str:
                  "conectar": actividades.conectar, "pensar": actividades.pensar, "descansar": actividades.descansar}
         try:
             resultado, tema_id = hacer[modo](con)
-        except fuentes.Limite as e:
-            return f"esperando a que Wikipedia se libere ({e})"   # no es una falla: es el contador
+        except fuentes.Espera as e:
+            return f"esperando ({e})"   # no es una falla: el contador de Wikipedia o un corte de internet
         con.execute("INSERT INTO ciclos (fecha, modo, tema_id, resultado) VALUES (?, ?, ?, ?)",
                     (memoria.ahora(), modo, tema_id, resultado))
         con.commit()

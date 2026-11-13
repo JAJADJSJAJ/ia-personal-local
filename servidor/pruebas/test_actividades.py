@@ -121,6 +121,21 @@ class Contador(unittest.TestCase):
         self.assertTrue(dormir.called)   # el segundo pedido esperó el intervalo
         self.assertEqual(json.loads((config.DATOS / "wikipedia.json").read_text())["n"], 2)
 
+    def test_sin_internet_es_espera(self):
+        import urllib.error
+        (config.DATOS / "wikipedia.json").unlink(missing_ok=True)
+        with mock.patch("urllib.request.urlopen", side_effect=urllib.error.URLError("Temporary failure in name resolution")):
+            with self.assertRaises(fuentes.Espera):
+                fuentes._pedir({})
+
+    def test_error_de_wikipedia_sigue_siendo_falla(self):
+        import urllib.error
+        (config.DATOS / "wikipedia.json").unlink(missing_ok=True)
+        e = urllib.error.HTTPError("u", 429, "Too Many Requests", {}, None)
+        with mock.patch("urllib.request.urlopen", side_effect=e):
+            with self.assertRaises(urllib.error.HTTPError):
+                fuentes._pedir({})
+
 
 if __name__ == "__main__":
     unittest.main()

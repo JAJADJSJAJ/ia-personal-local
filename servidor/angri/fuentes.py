@@ -2,6 +2,7 @@
 import json
 import re
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -10,7 +11,15 @@ from . import config
 API = "https://es.wikipedia.org/w/api.php"
 
 
-class Limite(Exception):
+class Espera(Exception):
+    """No es una falla: hay que esperar al próximo ciclo."""
+
+
+class SinRed(Espera):
+    pass
+
+
+class Limite(Espera):
     """Se alcanzó el máximo de pedidos a Wikipedia de esta hora: se espera a la próxima."""
 
 
@@ -42,8 +51,14 @@ def _pedir(params: dict) -> dict:
     _respetar_ritmo()
     url = API + "?" + urllib.parse.urlencode(params)
     pedido = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT})
-    with urllib.request.urlopen(pedido, timeout=30) as r:
-        return json.load(r)
+    try:
+        with urllib.request.urlopen(pedido, timeout=30) as r:
+            return json.load(r)
+    except urllib.error.HTTPError:
+        raise   # Wikipedia respondió con error (429, 503...): eso lo maneja salud
+    except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+        # Sin internet en la casa (WiFi, router, DNS): no es culpa de Angri, se reintenta en el próximo ciclo.
+        raise SinRed(f"sin internet: {getattr(e, 'reason', e)}") from e
 
 
 def _limpiar(texto: str) -> str:
