@@ -173,8 +173,11 @@ def cerrar(con, objetivo_id: int, estado: str, pregunta: str, notas: list[tuple]
         texto_notas = "\n".join(f"- {' '.join(r.split())}" for _, r, _ in notas)
         respuesta = modelo.llamar("respuesta", PEDIDO_RESPUESTA.format(pregunta=pregunta, notas=texto_notas))
         fuente = " ".join(r for _, r, _ in notas)
-        if verificar.anclaje(respuesta, fuente) < config.ANCLAJE_MINIMO:
-            respuesta = None  # la respuesta agrega cosas que las notas no dicen: no se guarda
+        # "Las notas no mencionan X" no es una respuesta sobre el mundo: se sacan esas oraciones y queda el resto
+        respuesta = verificar.sin_oraciones_de_la_fuente(respuesta) or None
+        if respuesta and (verificar.anclaje(respuesta, fuente) < config.ANCLAJE_MINIMO
+                          or verificar.parece_orden(respuesta) or len(respuesta) < 30):
+            respuesta = None  # agrega cosas que las notas no dicen, o no queda nada útil: no se guarda
     con.execute("UPDATE objetivos SET estado=?, respuesta=?, ultima=? WHERE id=?",
                 (estado, respuesta, memoria.ahora(), objetivo_id))
     pid = con.execute("SELECT pregunta_id FROM objetivos WHERE id=?", (objetivo_id,)).fetchone()[0]

@@ -71,6 +71,25 @@ def es_meta(texto: str) -> bool:
     return bool(_META.search(texto))
 
 
+_HABLA_DE_LA_FUENTE = re.compile(
+    r"\b(el|los|este|estos) (texto|textos|art[ií]culo|art[ií]culos)\b"
+    r"|\b(las|mis|estas|esas) notas\b|\bnotas proporcionadas\b|\b(esta|esa|la) informaci[oó]n (dada|proporcionada|disponible)\b",
+    re.IGNORECASE,
+)
+
+
+def habla_de_la_fuente(texto: str) -> bool:
+    """Una respuesta o reflexión que habla de 'el texto' o de 'las notas' en vez del mundo."""
+    return es_meta(texto) or bool(_HABLA_DE_LA_FUENTE.search(texto))
+
+
+def sin_oraciones_de_la_fuente(texto: str) -> str:
+    """Saca solo las oraciones que hablan de 'las notas' o 'el texto' y deja el resto.
+    (Tirar la respuesta entera por una frase así perdía respuestas buenas.)"""
+    oraciones = re.split(r"(?<=[.!?])\s+", " ".join(texto.split()))
+    return " ".join(o for o in oraciones if o and not habla_de_la_fuente(o)).strip()
+
+
 _PREGUNTA_PERSONAL = re.compile(
     r"\b(aprendiste|te (gust|parec|interes)|tu (opini|vida)|vos|sent[ií]s|pens[aá]s)\b", re.IGNORECASE
 )
@@ -125,7 +144,12 @@ _PREGUNTA_META = re.compile(
     r"\b(la|esa|esta|tu|mi|una) nota\b"
     r"|\b(el|este|ese) (texto|art[ií]culo|fragmento|p[aá]rrafo)\b"
     r"|\bse (podr[ií]a|deber[ií]a) haber (incluido|agregado|mencionado|puesto)"
-    r"|\bsin contradecir",
+    r"|\bsin contradecir"
+    # "¿Por qué es imposible determinar X con base únicamente en esta información?": habla de lo que leyó, no del mundo
+    r"|\b(esta|esa|la|dicha) informaci[oó]n\b"
+    r"|\bcon base (únicamente |solo |solamente )?en\b|\bbas[aá]ndo(me|se|nos)? (únicamente |solo )?en\b"
+    r"|\bseg[uú]n (el|este|ese|lo que dice el) (texto|art[ií]culo|fragmento)"
+    r"|\b(las|mis|estas|esas) notas\b",
     re.IGNORECASE,
 )
 

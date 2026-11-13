@@ -115,7 +115,7 @@ VIG_CUOTA_MAXIMA = 0.6
 VIG_PROB_OBJETIVO_BAJA = 0.15   # con el ajuste puesto, la probabilidad de seguir sus preguntas baja a esto
 VIG_REFLEXION_NOCHES = 3
 VIG_REFLEXION_PARECIDO = 0.97
-VIG_BASE_MAXIMA_MB = 500
+VIG_BASE_MAXIMA_MB = 10_000     # Fran le da hasta ~100 GB del disco: 10 GB de base + 7 copias de seguridad
 VIG_DISCO_MINIMO_GB = 10
 
 # Verificación de citas

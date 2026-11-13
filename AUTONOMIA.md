@@ -489,6 +489,12 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   Las notas rechazadas se miran en cada ciclo; el resto, cada noche al dormir. El resultado queda en `/var/lib/angri/salud.md` (`angri salud`).
   - Primera medición: 35% de notas rechazadas, 0% de preguntas repetidas, 11 temas distintos y el más visitado con el 23% de los ciclos. Todo normal.
 - **Cortes de luz:** todos los archivos propios (`yo/`, `salud.md`, las claves y las copias de la base) se escriben primero en un temporal y después se reemplazan de forma atómica (`memoria.escribir_seguro`). Un corte deja la versión vieja entera o la nueva entera, nunca un archivo a medias. La base ya estaba protegida con WAL y `synchronous=FULL`. Falta de parte de Fran poner en la BIOS "Restore on AC Power Loss" en "Power On".
+- **Respuestas y preguntas sobre "las notas" (12/11, noche).**
+  - El cierre de una investigación guardó como respuesta un texto que hablaba de sus notas: "Las notas proporcionadas no mencionan nada sobre Phantom Girl…".
+  - Primer arreglo: tirar la respuesta entera si hablaba de la fuente. Era demasiado bruto: borró la buena respuesta de Rumania por una sola oración final ("Las notas indican claramente…"). Se recuperó del log de llamadas.
+  - Arreglo final: se sacan solo las oraciones que hablan de "las notas" o "el texto", y queda el resto.
+  - El filtro de preguntas ahora también descarta las que hablan de "esta información" o "con base en…", porque se refieren a lo que leyó y no al mundo.
+- **Lugar en disco:** Fran le da hasta unos 100 GB. El aviso de la vigilancia salta con una base de 10 GB, que con 7 copias de seguridad suma unos 80 GB.
 - **Actualizaciones automáticas de seguridad** (`sistema/actualizaciones.sh`, `unattended-upgrades`). Solo toma el origen `trixie-security`, sin cambios de versión. Instala a las 05:00, después del sueño, y si hace falta reinicia sola a las 05:30. No hay reinicios periódicos "por las dudas": Linux y el sistema de Angri aguantan meses prendidos, y cada reinicio innecesario es una oportunidad de que algo no vuelva a arrancar sin nadie mirando.
 - **El instalador reiniciaba el modelo siempre**, y eso cortaba el ciclo que estuviera corriendo: hubo 3 "fallas" el 12/11, todas en el momento de reinstalar. Ahora solo lo reinicia si cambió su servicio.
 - **Calibración del umbral de repetidas:** los pares de notas más parecidos daban 0,77 y eran datos distintos (Rumania multipartidista hoy contra partido único antes). Por eso el umbral quedó alto, en 0,92.
