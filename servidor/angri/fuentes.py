@@ -1,6 +1,7 @@
 """Exposición al azar: un artículo cualquiera de Wikipedia en español. Solo lectura."""
 import json
 import re
+import time
 import urllib.parse
 import urllib.request
 
@@ -9,7 +10,36 @@ from . import config
 API = "https://es.wikipedia.org/w/api.php"
 
 
+class Limite(Exception):
+    """Se alcanzó el máximo de pedidos a Wikipedia de esta hora: se espera a la próxima."""
+
+
+def _contador() -> dict:
+    archivo = config.DATOS / "wikipedia.json"
+    try:
+        return json.loads(archivo.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def _respetar_ritmo():
+    """Cuida a Wikipedia con un contador en vez de un tope diario:
+    al menos WIKI_INTERVALO_SEG entre pedidos y como mucho WIKI_PEDIDOS_POR_HORA por hora."""
+    from . import memoria
+    estado = _contador()
+    hora = time.strftime("%Y-%m-%dT%H")
+    n = estado.get("n", 0) if estado.get("hora") == hora else 0
+    if n >= config.WIKI_PEDIDOS_POR_HORA:
+        raise Limite(f"{n} pedidos a Wikipedia en esta hora")
+    espera = estado.get("ultimo", 0) + config.WIKI_INTERVALO_SEG - time.time()
+    if espera > 0:
+        time.sleep(espera)
+    memoria.escribir_seguro(config.DATOS / "wikipedia.json",
+                            json.dumps({"hora": hora, "n": n + 1, "ultimo": time.time()}))
+
+
 def _pedir(params: dict) -> dict:
+    _respetar_ritmo()
     url = API + "?" + urllib.parse.urlencode(params)
     pedido = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT})
     with urllib.request.urlopen(pedido, timeout=30) as r:

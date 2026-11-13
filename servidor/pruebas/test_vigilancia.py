@@ -71,11 +71,10 @@ class Vigilancia(unittest.TestCase):
         self.assertIn("Ninguno: todo normal", (config.DATOS / "salud.md").read_text(encoding="utf-8"))
 
     def test_el_ciclo_respeta_solo_azar(self):
-        from angri import ciclo
+        from angri import actividades
+        self.con.executescript(actividades.ESQUEMA)
         vigilancia.poner(self.con, "solo_azar", 1, 24, "prueba")
-        with mock.patch("angri.objetivos.abiertos", return_value=[1]), mock.patch("random.random", return_value=0.0):
-            self.assertEqual(ciclo.elegir_modo(self.con), "azar")
-
+        self.assertEqual(actividades.posibles(self.con), ["azar"])
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,9 +18,9 @@ from datetime import datetime, timedelta
 
 from . import bandeja, config, memoria, modelo, verificar
 
-TIPOS_QUE_AVISAN = ("respuesta", "tema", "duda", "identidad")
+TIPOS_QUE_AVISAN = ("respuesta", "tema", "duda", "identidad", "conexion")
 TITULOS = {"respuesta": "Encontré algo", "tema": "Algo me empezó a interesar",
-           "duda": "Una duda", "identidad": "Decidí algo sobre mí"}
+           "duda": "Una duda", "conexion": "Se me ocurrió algo", "identidad": "Decidí algo sobre mí"}
 
 
 def canal() -> str:

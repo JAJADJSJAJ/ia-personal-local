@@ -47,8 +47,9 @@ def main():
                 print(f"     → {' '.join(r.split())[:200]}")
     modos = dict(con.execute("SELECT modo, COUNT(*) FROM ciclos WHERE fecha >= ? GROUP BY modo", (hoy,)).fetchall())
     if modos:
-        print(f"\nCiclos hoy: {modos.get('azar', 0)} al azar, {modos.get('objetivo', 0)} siguiendo sus preguntas"
-              f", {modos.get('falla', 0)} con fallas")
+        nombres = {"azar": "al azar", "objetivo": "siguiendo preguntas", "repasar": "repasando", "conectar": "conectando",
+                   "pensar": "pensando un tema", "descansar": "descansando", "falla": "con fallas"}
+        print("\nCiclos hoy: " + ", ".join(f"{n} {nombres.get(m, m)}" for m, n in sorted(modos.items(), key=lambda x: -x[1])))
     print()
     print("Últimos 7 días:")
     for tipo, n in con.execute(

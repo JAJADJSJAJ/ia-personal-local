@@ -14,7 +14,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from . import avisos, bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, sueno, temas, vectores, verificar, vigilancia
+from . import actividades, avisos, bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, sueno, temas, vectores, verificar, vigilancia
 
 _objetivo_en_curso: int | None = None  # para saber qué investigación estaba en marcha si el ciclo falla
 
@@ -119,25 +119,7 @@ def asignar_temas_pendientes(con):
 
 
 # ---------------------------------------------------------------- elegir qué hacer
-
-def elegir_modo(con) -> str:
-    if os.environ.get("ANGRI_MODO") in ("azar", "objetivo"):
-        return os.environ["ANGRI_MODO"]  # solo para pruebas
-    ultimos = [t for (t,) in con.execute(
-        "SELECT tema_id FROM ciclos ORDER BY id DESC LIMIT ?", (config.SATURACION,))]
-    if len(ultimos) == config.SATURACION and ultimos[0] is not None and len(set(ultimos)) == 1:
-        return "azar"  # saturación: demasiados ciclos seguidos en lo mismo
-    if vigilancia.ajuste(con, "solo_azar"):
-        return "azar"  # la vigilancia vio muchas preguntas repetidas: un día de cambio de aire
-    n_temas = con.execute("SELECT COUNT(*) FROM temas WHERE nombre IS NOT NULL").fetchone()[0]
-    prob = min(config.PROB_OBJETIVO_BASE + 0.05 * n_temas, config.PROB_OBJETIVO_MAX)
-    if (baja := vigilancia.ajuste(con, "prob_objetivo")) is not None:
-        prob = min(prob, baja)  # un tema se estaba quedando con todo: más azar unos días
-    hay_preguntas = con.execute("SELECT COUNT(*) FROM preguntas WHERE estado='abierta'").fetchone()[0] > 0
-    if (objetivos.abiertos(con) or hay_preguntas) and random.random() < prob:
-        return "objetivo"
-    return "azar"
-
+# Lo elige ella entre las actividades posibles (actividades.py); el código decide cuáles son posibles.
 
 # ---------------------------------------------------------------- modo AZAR
 
@@ -279,13 +261,17 @@ def ciclo() -> str:
         if vigilancia.ajuste(con, "pausa_lectura"):
             return "pausa de lectura (la vigilancia vio demasiadas notas rechazadas)"
         fallas_previas = len(salud.fallas_seguidas(con))
+        con.executescript(actividades.ESQUEMA)
         recordar.indexar_pendientes(con)   # si los embeddings no responden, falla y salud.py lo maneja
         asignar_temas_pendientes(con)
-        if memoria.lecturas_hoy(con) >= config.PAGINAS_POR_DIA:
-            return "presupuesto de lecturas agotado por hoy"
 
-        modo = elegir_modo(con)
-        resultado, tema_id = ciclo_objetivo(con) if modo == "objetivo" else ciclo_azar(con)
+        modo = actividades.elegir(con)
+        hacer = {"azar": ciclo_azar, "objetivo": ciclo_objetivo, "repasar": actividades.repasar,
+                 "conectar": actividades.conectar, "pensar": actividades.pensar, "descansar": actividades.descansar}
+        try:
+            resultado, tema_id = hacer[modo](con)
+        except fuentes.Limite as e:
+            return f"esperando a que Wikipedia se libere ({e})"   # no es una falla: es el contador
         con.execute("INSERT INTO ciclos (fecha, modo, tema_id, resultado) VALUES (?, ?, ?, ?)",
                     (memoria.ahora(), modo, tema_id, resultado))
         con.commit()

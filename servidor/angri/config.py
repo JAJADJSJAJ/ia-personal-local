@@ -40,7 +40,9 @@ TURNOS_DE_CONTEXTO = 6
 USER_AGENT = "AngriBot/0.1 (IA personal local, solo lectura)"
 LARGO_MINIMO = 800      # caracteres: menos que esto no vale la pena
 LARGO_MAXIMO = 3000     # se recorta acá (unos 800 tokens)
-PAGINAS_POR_DIA = 60    # presupuesto
+PAGINAS_POR_DIA = 400   # solo un tope de seguridad por si algo se descontrola: el ritmo lo cuida el contador
+WIKI_INTERVALO_SEG = 3        # mínimo entre dos pedidos a Wikipedia
+WIKI_PEDIDOS_POR_HORA = 120   # máximo por hora; al llegar, espera a la hora siguiente (sin contar como falla)
 
 # Fase C: temas, novedad y objetivos
 TEMA_SIMILITUD = 0.45          # coseno con el centro de un tema para pertenecer a él
@@ -117,6 +119,12 @@ VIG_REFLEXION_NOCHES = 3
 VIG_REFLEXION_PARECIDO = 0.97
 VIG_BASE_MAXIMA_MB = 10_000     # Fran le da hasta ~100 GB del disco: 10 GB de base + 7 copias de seguridad
 VIG_DISCO_MINIMO_GB = 10
+
+# Actividades (actividades.py): lo que puede elegir hacer en cada ciclo
+ACT_NOTAS_PARA_EMPEZAR = 5      # recién nacida solo lee al azar hasta tener esto
+ACT_REPETICION = 3              # si eligió lo mismo estas veces seguidas, esa sale de la lista un ciclo
+ACT_CONECTAR_MIN = 0.35         # dos notas para conectar: ni sin relación...
+ACT_CONECTAR_MAX = 0.75         # ...ni casi iguales (calibrado: datos distintos del mismo tema dieron 0,55-0,77)
 
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres

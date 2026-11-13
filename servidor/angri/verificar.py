@@ -73,6 +73,7 @@ def es_meta(texto: str) -> bool:
 
 _HABLA_DE_LA_FUENTE = re.compile(
     r"\b(el|los|este|estos) (texto|textos|art[ií]culo|art[ií]culos)\b"
+    r"|\b(ambos|ambas|los dos|las dos) (textos|art[ií]culos|notas|fragmentos)\b"
     r"|\b(las|mis|estas|esas) notas\b|\bnotas proporcionadas\b|\b(esta|esa|la) informaci[oó]n (dada|proporcionada|disponible)\b",
     re.IGNORECASE,
 )
@@ -91,7 +92,9 @@ def sin_oraciones_de_la_fuente(texto: str) -> str:
 
 
 _PREGUNTA_PERSONAL = re.compile(
-    r"\b(aprendiste|te (gust|parec|interes)|tu (opini|vida)|vos|sent[ií]s|pens[aá]s)\b", re.IGNORECASE
+    r"\b(aprendiste|te (gust|parec|interes)|tu (opini|vida)|vos|sent[ií]s|pens[aá]s)\b"
+    # preguntas de "hacer" ("¿cómo podemos crear…?"): no se responden leyendo
+    r"|\b(podemos|podr[ií]amos|deber[ií]amos|hagamos|crear|diseñar|inventar)\b", re.IGNORECASE
 )
 
 

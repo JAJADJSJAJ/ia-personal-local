@@ -40,7 +40,7 @@ def actualidad(con) -> str:
     proxima = con.execute("SELECT pregunta, gastado, presupuesto FROM objetivos WHERE estado='abierto' "
                           "ORDER BY ultima LIMIT 1").fetchone()
     from . import salud
-    plan = "cada unos 20 minutos, cuando Fran no está charlando, leés algo nuevo"
+    plan = ("cada unos 20 minutos, cuando Fran no está charlando, elegís qué hacer: leer algo nuevo, seguir una pregunta, releer lo que anotaste, conectar cosas que leíste, pensar un tema o descansar")
     if proxima:
         plan += f"; lo próximo es seguir con «{proxima[0]}» (llevás {proxima[1]} de {proxima[2]} lecturas)"
     plan += "; y de vez en cuando un artículo al azar (no sabés de qué tema hasta que te toca)"

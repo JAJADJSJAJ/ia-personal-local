@@ -489,6 +489,24 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   Las notas rechazadas se miran en cada ciclo; el resto, cada noche al dormir. El resultado queda en `/var/lib/angri/salud.md` (`angri salud`).
   - Primera medición: 35% de notas rechazadas, 0% de preguntas repetidas, 11 temas distintos y el más visitado con el 23% de los ciclos. Todo normal.
 - **Cortes de luz:** todos los archivos propios (`yo/`, `salud.md`, las claves y las copias de la base) se escriben primero en un temporal y después se reemplazan de forma atómica (`memoria.escribir_seguro`). Un corte deja la versión vieja entera o la nueva entera, nunca un archivo a medias. La base ya estaba protegida con WAL y `synchronous=FULL`. Falta de parte de Fran poner en la BIOS "Restore on AC Power Loss" en "Power On".
+- **Actividades elegidas (12/11, noche)** (`actividades.py`). Cada ciclo, Angri elige qué hacer entre las opciones posibles, que ve en orden al azar:
+  - leer al azar;
+  - seguir una de sus preguntas;
+  - repasar una nota vieja;
+  - conectar dos cosas que leyó en momentos distintos;
+  - pensar un tema;
+  - descansar.
+
+  El código decide cuáles son posibles:
+  - recién nacida, solo lee al azar hasta tener 5 notas;
+  - si repite la misma actividad 3 veces seguidas, esa sale de la lista;
+  - no descansa dos veces seguidas;
+  - sin cupo de Wikipedia, solo puede hacer lo que no usa internet;
+  - la vigilancia puede forzar un día solo de azar.
+
+  En la prueba con el modelo real eligió las 6 actividades en 8 intentos. Las conexiones se controlan por anclaje con las dos notas, y si no se pueden respaldar se descartan.
+- **Contador para Wikipedia en vez de tope diario:** al menos 3 segundos entre pedidos y como mucho 120 por hora; al llegar al máximo, espera sin contarlo como falla. El tope diario quedó solo como seguridad, en 400. Antes cortaba a las 60 lecturas y a las 22 h se quedaba sin nada para hacer.
+- **Renacer:** la noche del 12/11 se borró toda su memoria, porque tenía sesgos de las pruebas: temas forzados, charlas de prueba, el género elegido en una prueba. Fran pidió no guardar archivo. Se conservaron el código, la configuración, la clave de la web y el canal de ntfy. Su primera lectura en la vida nueva fue «Calle Nataniel Cox».
 - **Respuestas y preguntas sobre "las notas" (12/11, noche).**
   - El cierre de una investigación guardó como respuesta un texto que hablaba de sus notas: "Las notas proporcionadas no mencionan nada sobre Phantom Girl…".
   - Primer arreglo: tirar la respuesta entera si hablaba de la fuente. Era demasiado bruto: borró la buena respuesta de Rumania por una sola oración final ("Las notas indican claramente…"). Se recuperó del log de llamadas.
