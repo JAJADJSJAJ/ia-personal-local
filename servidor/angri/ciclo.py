@@ -14,7 +14,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from . import actividades, avisos, bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, sueno, temas, vectores, verificar, vigilancia
+from . import actividades, ahora, avisos, bandeja, config, fuentes, memoria, modelo, objetivos, recordar, salud, sueno, temas, vectores, verificar, vigilancia
 
 _objetivo_en_curso: int | None = None  # para saber qué investigación estaba en marcha si el ciclo falla
 
@@ -67,7 +67,9 @@ def primera_oracion(texto: str) -> str:
 
 
 def charlando() -> bool:
-    """La charla tiene prioridad: si Fran habló hace poco, el ciclo espera."""
+    """La charla tiene prioridad: si Fran está charlando (web) o habló hace poco (terminal), el ciclo espera."""
+    if ahora.charla_activa():
+        return True
     if not config.CHARLANDO.exists():
         return False
     minutos = (datetime.now().timestamp() - config.CHARLANDO.stat().st_mtime) / 60
@@ -125,6 +127,8 @@ def asignar_temas_pendientes(con):
 
 def ciclo_azar(con) -> tuple[str, int | None]:
     art = fuentes.articulo_al_azar(memoria.urls_leidas(con))
+    if art:
+        ahora.marcar("azar", art["titulo"])
     if art is None:
         memoria.evento(con, "sin_articulo")
         return "no encontré un artículo útil", None
@@ -194,6 +198,7 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
     if obj is None:
         return ciclo_azar(con)
     oid, pregunta, gastado, presupuesto, _ = obj
+    ahora.marcar("objetivo", pregunta)
     global _objetivo_en_curso
     _objetivo_en_curso = oid
     if nuevo:
@@ -223,6 +228,7 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
             con.commit()
         return f"objetivo {oid}: sin resultados para {probadas} ({estado or 'sigue abierto'})", None
 
+    ahora.marcar("objetivo", f"{pregunta} — leyendo «{art['titulo']}»")
     art["texto"] = fuentes.parrafos_relevantes(art["texto"], vector_pregunta, vectores.documentos)
     nota_id, resumen, tema = anotar(con, art, PEDIDO_NOTA_OBJETIVO, pregunta=pregunta)
     estado = objetivos.registrar_lectura(con, oid, pregunta, nota_id, resumen if nota_id else None)
@@ -265,7 +271,9 @@ def ciclo() -> str:
         recordar.indexar_pendientes(con)   # si los embeddings no responden, falla y salud.py lo maneja
         asignar_temas_pendientes(con)
 
+        ahora.marcar("eligiendo")
         modo = actividades.elegir(con)
+        ahora.marcar(modo)
         hacer = {"azar": ciclo_azar, "objetivo": ciclo_objetivo, "repasar": actividades.repasar,
                  "conectar": actividades.conectar, "pensar": actividades.pensar, "descansar": actividades.descansar}
         try:
@@ -280,10 +288,15 @@ def ciclo() -> str:
         avisos.avisar(con)
         return f"[{modo}] {resultado}"
     finally:
+        ahora.limpiar()
         con.close()
 
 
 def main():
+    # Si Fran inicia una charla, la web corta este proceso (SIGTERM): se sale prolijo, corriendo los finally
+    # (borra EN_CICLO, cierra la base). La base guarda todo o nada, así que cortar es seguro.
+    import signal
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     try:
         print(ciclo())
     except Exception as e:  # el ciclo nunca decide si seguir vivo: falla, se anota, y el timer sigue

@@ -126,6 +126,12 @@ ACT_REPETICION = 3              # si eligió lo mismo estas veces seguidas, esa 
 ACT_CONECTAR_MIN = 0.35         # dos notas para conectar: ni sin relación...
 ACT_CONECTAR_MAX = 0.75         # ...ni casi iguales (calibrado: datos distintos del mismo tema dieron 0,55-0,77)
 
+# Qué está haciendo y charla por la web (ahora.py)
+EN_CICLO = DATOS / "EN_CICLO"
+CHARLA_WEB = DATOS / "CHARLA_WEB"
+CHARLA_WEB_INACTIVIDAD_MIN = 10  # sin mensajes este tiempo, la charla se cierra sola
+CHARLA_WEB_LATIDO_SEG = 90       # si la página deja de dar señales (se cerró), se cierra sola
+
 # Verificación de citas
 CITA_MINIMA = 25        # caracteres
 ANCLAJE_MINIMO = 0.5   # fracción de palabras del resumen que tienen que estar en la fuente

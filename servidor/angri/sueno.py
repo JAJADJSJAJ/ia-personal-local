@@ -190,7 +190,8 @@ def escribir_diario(linea: str):
 def dormir() -> str:
     if config.PAUSA.exists():
         return "en pausa: no duermo"
-    config.DURMIENDO.touch()
+    import json
+    memoria.escribir_seguro(config.DURMIENDO, json.dumps({"pid": os.getpid(), "actividad": "dormir"}))
     con = memoria.abrir()
     con.executescript(ESQUEMA)
     informe = []
@@ -246,6 +247,10 @@ def dormir() -> str:
 
 
 def main():
+    # Si Fran inicia una charla, la web corta este proceso (SIGTERM): se sale prolijo, corriendo los finally
+    # (borra EN_CICLO, cierra la base). La base guarda todo o nada, así que cortar es seguro.
+    import signal
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     try:
         print(dormir())
     except Exception as e:

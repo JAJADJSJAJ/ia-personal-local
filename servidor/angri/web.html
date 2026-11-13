@@ -3,219 +3,869 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#14161a">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15130f" media="(prefers-color-scheme: dark)">
 <title>Angri</title>
 <style>
+:root {
+  --papel: #f3efe6; --hoja: #fbf8f1; --tinta: #23201b; --tinta-2: #4a443b; --gris: #8a8275;
+  --linea: #ddd4c3; --linea-suave: #e9e2d4;
+  --ocre: #b4612a; --ocre-suave: #f1e1d1; --salvia: #56735c; --salvia-suave: #dfe8dd;
+  --azul: #3f5d78; --rojo: #a5432f;
+  --sombra: 0 1px 0 rgba(35,32,27,.04), 0 8px 24px -12px rgba(35,32,27,.18);
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --sans: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --radio: 14px;
+}
+@media (prefers-color-scheme: dark) {
   :root {
-    --fondo: #f6f5f2; --panel: #ffffff; --texto: #1d1f23; --suave: #6b6f78; --borde: #e3e1dc;
-    --angri: #eef1f6; --vos: #2f5d50; --vos-texto: #ffffff; --acento: #2f5d50;
+    --papel: #15130f; --hoja: #1d1a15; --tinta: #ece5d6; --tinta-2: #c9c0ae; --gris: #8f8676;
+    --linea: #34302a; --linea-suave: #2a2621;
+    --ocre: #e0925a; --ocre-suave: #3a2a1d; --salvia: #8fb196; --salvia-suave: #23302a;
+    --azul: #8fb0cc; --rojo: #e08a75;
+    --sombra: 0 1px 0 rgba(0,0,0,.2), 0 10px 30px -14px rgba(0,0,0,.6);
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --fondo: #14161a; --panel: #1c1f24; --texto: #e7e7e4; --suave: #9a9ea6; --borde: #2c3037;
-      --angri: #23272e; --vos: #3c7a68; --vos-texto: #ffffff; --acento: #6fb39e;
-    }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--papel); color: var(--tinta);
+  font: 16px/1.55 var(--sans); min-height: 100vh;
+  background-image: radial-gradient(var(--linea-suave) 1px, transparent 1px);
+  background-size: 22px 22px; background-attachment: fixed;
+}
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+::selection { background: var(--ocre-suave); }
+
+/* ---------- barra superior ---------- */
+.barra {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px max(16px, env(safe-area-inset-left)); padding-top: max(12px, env(safe-area-inset-top));
+  background: color-mix(in srgb, var(--papel) 86%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--linea);
+}
+.marca { font: 600 24px/1 var(--serif); letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
+.marca small { font: 500 12px var(--mono); color: var(--gris); letter-spacing: .02em; }
+.chip-estado {
+  display: inline-flex; align-items: center; gap: 8px; padding: 5px 11px 5px 9px;
+  border: 1px solid var(--linea); border-radius: 999px; font-size: 13px; color: var(--tinta-2);
+  background: var(--hoja); max-width: 46vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.punto { width: 8px; height: 8px; border-radius: 50%; background: var(--salvia); flex: none; animation: latir 2.4s ease-in-out infinite; }
+.punto.durmiendo, .punto.pausa { background: var(--azul); animation-duration: 5s; }
+.punto.charlando { background: var(--ocre); animation-duration: 1.2s; }
+.punto.descanso, .punto.esperando { background: var(--gris); animation-duration: 4s; }
+@keyframes latir { 0%,100% { transform: scale(1); opacity: 1 } 50% { transform: scale(.6); opacity: .55 } }
+.espacio { flex: 1; }
+.boton-charla {
+  display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer;
+  background: var(--tinta); color: var(--papel); padding: 9px 16px 9px 13px; border-radius: 999px;
+  font-weight: 600; font-size: 15px; box-shadow: var(--sombra);
+  transition: transform .2s cubic-bezier(.2,.8,.2,1), background .2s;
+}
+.boton-charla:hover { transform: translateY(-1px); }
+.boton-charla:active { transform: translateY(1px) scale(.98); }
+.boton-charla svg { width: 18px; height: 18px; }
+
+/* ---------- estructura ---------- */
+.marco { max-width: 1120px; margin: 0 auto; padding: 0 16px 80px; display: grid; grid-template-columns: 190px 1fr; gap: 40px; }
+.indice { position: sticky; top: 76px; align-self: start; padding-top: 34px; }
+.indice a {
+  display: flex; gap: 10px; padding: 6px 0; text-decoration: none; color: var(--gris); font-size: 14px;
+  transition: color .2s;
+}
+.indice a span { font: 12px var(--mono); opacity: .7; padding-top: 2px; }
+.indice a.activo, .indice a:hover { color: var(--tinta); }
+.indice a.activo span { color: var(--ocre); opacity: 1; }
+main { min-width: 0; }
+@media (max-width: 860px) {
+  .marco { grid-template-columns: 1fr; gap: 0; }
+  .indice {
+    position: sticky; top: 61px; z-index: 10; display: flex; gap: 6px; overflow-x: auto; padding: 10px 0;
+    margin: 0 -16px; padding-left: 16px; padding-right: 16px; scrollbar-width: none;
+    background: color-mix(in srgb, var(--papel) 90%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-  body {
-    background: var(--fondo); color: var(--texto);
-    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    display: flex; flex-direction: column;
-  }
-  header {
-    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-    padding-top: max(12px, env(safe-area-inset-top));
-    border-bottom: 1px solid var(--borde); background: var(--panel);
-  }
-  header h1 { font-size: 18px; margin: 0; letter-spacing: .02em; }
-  #situacion { font-size: 13px; color: var(--suave); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  nav { display: flex; gap: 4px; }
-  nav button {
-    border: 1px solid var(--borde); background: transparent; color: var(--texto);
-    padding: 6px 12px; border-radius: 999px; font: inherit; font-size: 14px; cursor: pointer;
-  }
-  nav button[aria-selected="true"] { background: var(--acento); border-color: var(--acento); color: #fff; }
-  main { flex: 1; overflow: hidden; display: flex; flex-direction: column; max-width: 760px; width: 100%; margin: 0 auto; }
-  section { flex: 1; overflow-y: auto; padding: 16px; display: none; }
-  section.activa { display: block; }
-  .msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; margin: 6px 0; white-space: pre-wrap; word-wrap: break-word; }
-  .angri { background: var(--angri); border-bottom-left-radius: 4px; }
-  .vos { background: var(--vos); color: var(--vos-texto); margin-left: auto; border-bottom-right-radius: 4px; }
-  .aviso { color: var(--suave); font-size: 14px; text-align: center; margin: 10px 0; }
-  .pensando::after { content: "…"; animation: puntos 1.2s infinite; }
-  @keyframes puntos { 50% { opacity: .2; } }
-  form {
-    display: flex; gap: 8px; padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom));
-    border-top: 1px solid var(--borde); background: var(--panel);
-  }
-  textarea {
-    flex: 1; resize: none; border: 1px solid var(--borde); border-radius: 12px; padding: 10px 12px;
-    font: inherit; background: var(--fondo); color: var(--texto); max-height: 140px;
-  }
-  form button {
-    border: 0; border-radius: 12px; padding: 0 16px; font: inherit; font-weight: 600;
-    background: var(--acento); color: #fff; cursor: pointer;
-  }
-  form button:disabled { opacity: .5; cursor: default; }
-  .chips { display: flex; gap: 8px; padding: 0 16px 8px; flex-wrap: wrap; }
-  .chips button {
-    border: 1px solid var(--borde); background: var(--panel); color: var(--texto);
-    border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 14px; cursor: pointer;
-  }
-  h2 { font-size: 15px; color: var(--suave); font-weight: 600; margin: 20px 0 8px; text-transform: uppercase; letter-spacing: .05em; }
-  h2:first-child { margin-top: 0; }
-  .tarjeta { background: var(--panel); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 14px; margin: 6px 0; }
-  .barra { height: 6px; background: var(--borde); border-radius: 3px; margin-top: 6px; overflow: hidden; }
-  .barra > div { height: 100%; background: var(--acento); }
-  .chico { color: var(--suave); font-size: 14px; }
-  .cifras { display: flex; gap: 10px; }
-  .cifras .tarjeta { flex: 1; text-align: center; }
-  .cifras b { display: block; font-size: 22px; }
-  #clave { max-width: 420px; margin: 40px auto; text-align: center; }
-  #clave input { width: 100%; padding: 10px; font: inherit; border-radius: 10px; border: 1px solid var(--borde); background: var(--panel); color: var(--texto); margin: 10px 0; }
+  .indice::-webkit-scrollbar { display: none; }
+  .indice a { flex: none; border: 1px solid var(--linea); border-radius: 999px; padding: 5px 12px; background: var(--hoja); font-size: 13px; }
+  .indice a span { display: none; }
+  .indice a.activo { border-color: var(--ocre); }
+}
+
+section { padding-top: 34px; scroll-margin-top: 80px; }
+@media (max-width: 860px) { section { scroll-margin-top: 120px; } }
+.titulo-seccion { display: flex; align-items: baseline; gap: 12px; margin: 0 0 14px; }
+.titulo-seccion .num { font: 13px var(--mono); color: var(--ocre); }
+.titulo-seccion h2 { font: 600 26px/1.15 var(--serif); margin: 0; letter-spacing: -.01em; }
+.titulo-seccion .nota-lateral { margin-left: auto; font-size: 13px; color: var(--gris); }
+.vacio { color: var(--gris); font-style: italic; font-family: var(--serif); font-size: 17px; margin: 6px 0 0; }
+
+.hoja {
+  background: var(--hoja); border: 1px solid var(--linea); border-radius: var(--radio);
+  box-shadow: var(--sombra); padding: 18px 20px;
+}
+
+/* aparición suave */
+.aparece { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1); }
+.aparece.visible { opacity: 1; transform: none; }
+
+/* ---------- 01 ahora ---------- */
+.ahora { display: grid; grid-template-columns: 150px 1fr; gap: 26px; align-items: center; padding: 26px; }
+@media (max-width: 560px) { .ahora { grid-template-columns: 1fr; text-align: left; gap: 10px; padding: 20px; } .orbe { width: 96px; height: 96px; } }
+.orbe { width: 140px; height: 140px; position: relative; }
+.orbe svg { width: 100%; height: 100%; overflow: visible; }
+.orbe .forma { transform-origin: 50% 50%; animation: respirar 4.5s ease-in-out infinite; }
+.orbe .halo { transform-origin: 50% 50%; animation: halo 4.5s ease-in-out infinite; }
+.orbe[data-tipo="activa"] .forma { animation-duration: 2.6s; }
+.orbe[data-tipo="activa"] .halo { animation-duration: 2.6s; }
+.orbe[data-tipo="charlando"] .forma { animation-duration: 1.6s; }
+.orbe[data-tipo="durmiendo"] .forma, .orbe[data-tipo="pausa"] .forma { animation-duration: 8s; opacity: .75; }
+.orbe[data-tipo="descanso"] .forma, .orbe[data-tipo="esperando"] .forma { animation-duration: 6s; }
+@keyframes respirar {
+  0%,100% { transform: scale(1) rotate(0deg); border-radius: 0; }
+  50% { transform: scale(1.06) rotate(8deg); }
+}
+@keyframes halo { 0%,100% { transform: scale(.92); opacity: .35 } 50% { transform: scale(1.12); opacity: .1 } }
+.ahora .que { font: 600 30px/1.15 var(--serif); margin: 0 0 6px; letter-spacing: -.01em; }
+.ahora .detalle { font: italic 19px/1.4 var(--serif); color: var(--tinta-2); margin: 0 0 12px; overflow-wrap: anywhere; }
+.ahora .meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--gris); }
+.ahora .meta b { color: var(--tinta-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.cifras { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+@media (max-width: 560px) { .cifras { grid-template-columns: repeat(2, 1fr); } }
+.cifra { padding: 14px 16px; }
+.cifra b { display: block; font: 600 30px/1 var(--serif); font-variant-numeric: tabular-nums; }
+.cifra span { font-size: 13px; color: var(--gris); }
+
+.hoy { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.etiqueta { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: var(--linea-suave); color: var(--tinta-2); }
+.etiqueta.ocre { background: var(--ocre-suave); color: var(--ocre); }
+.etiqueta.salvia { background: var(--salvia-suave); color: var(--salvia); }
+
+/* ---------- 02 quién es ---------- */
+.quien { position: relative; padding: 24px 26px 22px 30px; }
+.quien::before { content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 3px; border-radius: 3px; background: var(--ocre); }
+.quien p { font: 20px/1.55 var(--serif); margin: 0; }
+.quien .pie { margin-top: 14px; font-size: 13px; color: var(--gris); display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.resumen { margin-top: 12px; padding: 16px 20px; }
+.resumen h3 { font: 600 13px var(--mono); color: var(--gris); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 6px; }
+.resumen p { margin: 0; font: 17px/1.55 var(--serif); color: var(--tinta-2); }
+
+/* ---------- 03 temas ---------- */
+.tema { padding: 14px 18px; margin-bottom: 10px; cursor: pointer; transition: border-color .2s; }
+.tema:hover { border-color: var(--gris); }
+.tema .fila { display: flex; align-items: baseline; gap: 12px; }
+.tema h3 { font: 600 19px var(--serif); margin: 0; flex: 1; }
+.tema .n { font: 13px var(--mono); color: var(--gris); white-space: nowrap; }
+.barra-peso { height: 5px; background: var(--linea-suave); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+.barra-peso div { height: 100%; width: 0; background: linear-gradient(90deg, var(--salvia), var(--ocre)); border-radius: 3px; transition: width 1.1s cubic-bezier(.2,.8,.2,1); }
+.desplegable { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
+.desplegable > div { overflow: hidden; }
+.abierto .desplegable { grid-template-rows: 1fr; }
+.entendi { font: 16.5px/1.6 var(--serif); color: var(--tinta-2); padding-top: 12px; white-space: pre-line; }
+
+/* ---------- 04 preguntas ---------- */
+.dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .dos-col { grid-template-columns: 1fr; } }
+.investigacion { padding: 16px 18px; }
+.investigacion p { margin: 0 0 10px; font: 17px/1.4 var(--serif); }
+.pasos { display: flex; gap: 4px; }
+.pasos i { flex: 1; height: 6px; border-radius: 3px; background: var(--linea-suave); }
+.pasos i.lleno { background: var(--ocre); }
+.pasos-txt { font-size: 12.5px; color: var(--gris); margin-top: 6px; }
+.lista-preguntas { list-style: none; margin: 12px 0 0; padding: 0; }
+.lista-preguntas li {
+  padding: 10px 2px 10px 26px; border-bottom: 1px dashed var(--linea); position: relative;
+  font: 16.5px/1.45 var(--serif); color: var(--tinta-2);
+}
+.lista-preguntas li::before { content: "?"; position: absolute; left: 4px; top: 10px; font: 700 14px var(--mono); color: var(--ocre); }
+.cerrada { padding: 14px 18px; margin-top: 10px; }
+.cerrada .q { font: 16.5px var(--serif); margin: 0 0 6px; }
+.cerrada .r { font-size: 15px; color: var(--tinta-2); margin: 0; }
+
+/* ---------- 05 cuaderno ---------- */
+.notas { columns: 2 300px; column-gap: 12px; }
+.nota { break-inside: avoid; margin-bottom: 12px; padding: 16px 18px; cursor: pointer; position: relative; }
+.nota .de { font: 12.5px var(--mono); color: var(--gris); display: flex; justify-content: space-between; gap: 8px; }
+.nota h3 { font: 600 18px/1.3 var(--serif); margin: 4px 0 6px; }
+.nota .texto { margin: 0; font-size: 15px; color: var(--tinta-2); }
+.cita { margin: 12px 0 0; padding: 8px 0 2px 14px; border-left: 2px solid var(--ocre); font: italic 15.5px/1.5 var(--serif); color: var(--tinta-2); }
+.fuente { display: inline-block; margin-top: 8px; font-size: 13px; color: var(--azul); text-decoration: none; border-bottom: 1px solid currentColor; }
+.confirmada { position: absolute; top: 14px; right: 14px; }
+
+/* ---------- 06 conexiones / 07 de vos ---------- */
+.conexion { padding: 16px 18px; margin-bottom: 10px; }
+.conexion .par { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 600 15px var(--serif); margin-bottom: 8px; }
+.conexion .par svg { width: 22px; height: 22px; color: var(--ocre); flex: none; }
+.conexion p { margin: 0; font: 16.5px/1.5 var(--serif); color: var(--tinta-2); }
+.de-fran { padding: 16px 18px; margin-bottom: 10px; }
+.de-fran .q { font-size: 14px; color: var(--gris); margin: 0 0 6px; }
+.de-fran blockquote { margin: 0; font: 17px/1.5 var(--serif); }
+
+/* ---------- 08 diario ---------- */
+.linea-tiempo { list-style: none; padding: 0; margin: 0; position: relative; }
+.linea-tiempo::before { content: ""; position: absolute; left: 58px; top: 8px; bottom: 8px; width: 1px; background: var(--linea); }
+.linea-tiempo li { display: grid; grid-template-columns: 58px 1fr; gap: 0 22px; padding: 7px 0; position: relative; }
+.linea-tiempo li::after { content: ""; position: absolute; left: 54px; top: 15px; width: 9px; height: 9px; border-radius: 50%; background: var(--hoja); border: 2px solid var(--ocre); }
+.linea-tiempo time { font: 13px var(--mono); color: var(--gris); padding-top: 3px; text-align: right; }
+.linea-tiempo p { margin: 0; font-size: 15.5px; color: var(--tinta-2); }
+.linea-tiempo .dia { grid-column: 2; font: 600 13px var(--mono); color: var(--gris); text-transform: uppercase; letter-spacing: .06em; padding-top: 10px; }
+.linea-tiempo .dia::after { display: none; }
+
+/* ---------- 09 salud ---------- */
+.salud { display: flex; flex-wrap: wrap; gap: 10px; }
+.salud .hoja { padding: 12px 16px; font-size: 14.5px; }
+
+/* ---------- charla (pantalla aparte) ---------- */
+.charla {
+  position: fixed; inset: 0; z-index: 50; background: var(--papel);
+  display: flex; flex-direction: column;
+  transform: translateX(100%); transition: transform .45s cubic-bezier(.2,.8,.2,1); visibility: hidden;
+}
+.charla.abierta { transform: none; visibility: visible; }
+.charla-barra {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--linea); background: var(--hoja);
+}
+.volver {
+  width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--linea); background: transparent;
+  display: grid; place-items: center; cursor: pointer; transition: opacity .2s, background .2s;
+}
+.volver:hover:not(:disabled) { background: var(--linea-suave); }
+.volver:disabled { opacity: .3; cursor: not-allowed; }
+.volver svg { width: 20px; height: 20px; }
+.charla-barra h2 { font: 600 20px var(--serif); margin: 0; }
+.charla-barra .sub { font-size: 12.5px; color: var(--gris); }
+.reloj { margin-left: auto; display: flex; align-items: center; gap: 8px; font: 13px var(--mono); color: var(--gris); }
+[hidden] { display: none !important; }
+.reloj svg { width: 26px; height: 26px; transform: rotate(-90deg); }
+.reloj circle { fill: none; stroke-width: 3; }
+.reloj .fondo { stroke: var(--linea); }
+.reloj .avance { stroke: var(--ocre); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.reloj.poco .avance { stroke: var(--rojo); }
+
+.charla-cuerpo { flex: 1; overflow-y: auto; padding: 20px 16px; }
+.charla-cuerpo .ancho { max-width: 720px; margin: 0 auto; }
+.inicio-charla { max-width: 440px; margin: 8vh auto 0; text-align: center; }
+.inicio-charla .orbe { margin: 0 auto 18px; width: 110px; height: 110px; }
+.inicio-charla h3 { font: 600 26px/1.2 var(--serif); margin: 0 0 10px; }
+.inicio-charla p { color: var(--tinta-2); margin: 0 0 22px; }
+.boton-grande {
+  border: 0; cursor: pointer; background: var(--ocre); color: #fff; font-weight: 600; font-size: 17px;
+  padding: 14px 26px; border-radius: 999px; box-shadow: var(--sombra); transition: transform .2s, filter .2s;
+}
+.boton-grande:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.boton-grande:disabled { opacity: .6; cursor: wait; transform: none; }
+.aviso-chico { font-size: 13px; color: var(--gris); margin-top: 14px; }
+
+.mensaje { display: flex; gap: 10px; margin: 10px 0; animation: entra .35s cubic-bezier(.2,.8,.2,1); }
+@keyframes entra { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+.mensaje .burbuja { max-width: min(78%, 560px); padding: 11px 15px; border-radius: 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mensaje.angri .burbuja { background: var(--hoja); border: 1px solid var(--linea); border-bottom-left-radius: 5px; font: 17px/1.5 var(--serif); }
+.mensaje.vos { justify-content: flex-end; }
+.mensaje.vos .burbuja { background: var(--tinta); color: var(--papel); border-bottom-right-radius: 5px; }
+.avatar { width: 28px; height: 28px; flex: none; margin-top: 4px; }
+.mensaje.sistema { justify-content: center; }
+.mensaje.sistema .burbuja { background: transparent; color: var(--gris); font-size: 13.5px; text-align: center; padding: 4px 10px; }
+.escribiendo span { display: inline-block; width: 7px; height: 7px; margin: 0 2px; border-radius: 50%; background: var(--gris); animation: salto 1.2s infinite; }
+.escribiendo span:nth-child(2) { animation-delay: .15s; } .escribiendo span:nth-child(3) { animation-delay: .3s; }
+@keyframes salto { 0%,60%,100% { transform: none; opacity: .5 } 30% { transform: translateY(-5px); opacity: 1 } }
+
+.charla-pie { border-top: 1px solid var(--linea); background: var(--hoja); padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+.charla-pie .ancho { max-width: 720px; margin: 0 auto; }
+.acciones { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.boton-borde {
+  border: 1px solid var(--linea); background: var(--papel); padding: 6px 14px; border-radius: 999px; font-size: 14px; cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.boton-borde:hover { border-color: var(--gris); }
+.boton-borde.terminar { margin-left: auto; color: var(--rojo); border-color: color-mix(in srgb, var(--rojo) 40%, var(--linea)); }
+.entrada { display: flex; gap: 8px; align-items: flex-end; }
+.entrada textarea {
+  flex: 1; resize: none; border: 1px solid var(--linea); border-radius: 16px; padding: 11px 14px;
+  font: inherit; background: var(--papel); color: var(--tinta); max-height: 140px; outline: none; transition: border-color .2s;
+}
+.entrada textarea:focus { border-color: var(--ocre); }
+.enviar {
+  width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ocre); color: #fff; cursor: pointer;
+  display: grid; place-items: center; flex: none; transition: transform .15s, opacity .2s;
+}
+.enviar:disabled { opacity: .4; cursor: default; }
+.enviar:not(:disabled):active { transform: scale(.94); }
+.enviar svg { width: 20px; height: 20px; }
+
+#clave { max-width: 420px; margin: 12vh auto; padding: 26px; text-align: center; }
+#clave input { width: 100%; padding: 12px; font: inherit; border-radius: 12px; border: 1px solid var(--linea); background: var(--papel); color: var(--tinta); margin: 12px 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .aparece { opacity: 1; transform: none; }
+}
 </style>
 </head>
 <body>
-<header>
-  <h1>Angri</h1>
-  <span id="situacion"></span>
-  <nav role="tablist">
-    <button role="tab" data-ver="charla" aria-selected="true">Charla</button>
-    <button role="tab" data-ver="anda" aria-selected="false">Qué anda haciendo</button>
-  </nav>
+
+<header class="barra">
+  <div class="marca">angri <small id="dias"></small></div>
+  <span class="chip-estado" id="chip"><i class="punto" id="punto"></i><span id="chip-texto">…</span></span>
+  <span class="espacio"></span>
+  <button class="boton-charla" id="abrir-charla" aria-label="Abrir la charla">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z"/></svg>
+    Charlar
+  </button>
 </header>
-<main>
-  <section id="charla" class="activa" aria-live="polite"></section>
-  <section id="anda"></section>
-  <div class="chips" id="chips"><button type="button" id="btn-novedades">Novedades</button></div>
-  <form id="form">
-    <textarea id="entrada" rows="1" placeholder="Escribile a Angri…" autocomplete="off"></textarea>
-    <button id="enviar">Enviar</button>
-  </form>
-</main>
+
+<div class="marco" id="marco">
+  <nav class="indice" id="indice" aria-label="Secciones">
+    <a href="#ahora"><span>01</span>Ahora</a>
+    <a href="#quien"><span>02</span>Quién es</a>
+    <a href="#temas"><span>03</span>Le interesa</a>
+    <a href="#preguntas"><span>04</span>Se pregunta</a>
+    <a href="#cuaderno"><span>05</span>Cuaderno</a>
+    <a href="#conexiones"><span>06</span>Conexiones</a>
+    <a href="#de-vos"><span>07</span>Lo que le contaste</a>
+    <a href="#diario"><span>08</span>Diario</a>
+    <a href="#salud"><span>09</span>Salud</a>
+  </nav>
+  <main id="contenido">
+    <section id="ahora">
+      <div class="titulo-seccion"><span class="num">01</span><h2>Ahora</h2><span class="nota-lateral" id="actualizado"></span></div>
+      <div class="hoja ahora aparece">
+        <div class="orbe" id="orbe" data-tipo="esperando"></div>
+        <div>
+          <p class="que" id="que">Mirando qué está haciendo…</p>
+          <p class="detalle" id="detalle"></p>
+          <div class="meta" id="meta"></div>
+        </div>
+      </div>
+      <div class="cifras" id="cifras"></div>
+      <div class="hoy" id="hoy"></div>
+    </section>
+
+    <section id="quien">
+      <div class="titulo-seccion"><span class="num">02</span><h2>Quién es</h2><span class="nota-lateral">lo escribe Angri cada noche</span></div>
+      <div id="quien-cuerpo"></div>
+    </section>
+
+    <section id="temas">
+      <div class="titulo-seccion"><span class="num">03</span><h2>Le interesa</h2><span class="nota-lateral">temas que se formaron solos</span></div>
+      <div id="temas-cuerpo"></div>
+    </section>
+
+    <section id="preguntas">
+      <div class="titulo-seccion"><span class="num">04</span><h2>Se pregunta</h2></div>
+      <div id="preguntas-cuerpo"></div>
+    </section>
+
+    <section id="cuaderno">
+      <div class="titulo-seccion"><span class="num">05</span><h2>Cuaderno</h2><span class="nota-lateral">tocá una nota para ver la cita</span></div>
+      <div id="notas-cuerpo"></div>
+    </section>
+
+    <section id="conexiones">
+      <div class="titulo-seccion"><span class="num">06</span><h2>Conexiones</h2><span class="nota-lateral">cosas que unió Angri</span></div>
+      <div id="conexiones-cuerpo"></div>
+    </section>
+
+    <section id="de-vos">
+      <div class="titulo-seccion"><span class="num">07</span><h2>Lo que le contaste</h2></div>
+      <div id="defran-cuerpo"></div>
+    </section>
+
+    <section id="diario">
+      <div class="titulo-seccion"><span class="num">08</span><h2>Diario</h2></div>
+      <div class="hoja" id="diario-cuerpo"></div>
+    </section>
+
+    <section id="salud">
+      <div class="titulo-seccion"><span class="num">09</span><h2>Salud</h2><span class="nota-lateral">la vigila el código, no el modelo</span></div>
+      <div id="salud-cuerpo"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ======================= CHARLA ======================= -->
+<div class="charla" id="charla" role="dialog" aria-modal="true" aria-label="Charla con Angri">
+  <div class="charla-barra">
+    <button class="volver" id="volver" aria-label="Volver al panel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div>
+      <h2>Charla con Angri</h2>
+      <div class="sub" id="charla-sub">Todavía no empezó</div>
+    </div>
+    <div class="reloj" id="reloj" hidden>
+      <span id="reloj-txt">10:00</span>
+      <svg viewBox="0 0 32 32"><circle class="fondo" cx="16" cy="16" r="13"/><circle class="avance" id="reloj-arco" cx="16" cy="16" r="13"/></svg>
+    </div>
+  </div>
+  <div class="charla-cuerpo" id="charla-cuerpo">
+    <div class="ancho" id="mensajes">
+      <div class="inicio-charla" id="inicio-charla">
+        <div class="orbe" id="orbe-charla" data-tipo="esperando"></div>
+        <h3>¿Charlamos?</h3>
+        <p>Al empezar, Angri deja lo que esté haciendo, sin romper nada, y te presta atención. Cuando termines, sigue con lo suyo.</p>
+        <button class="boton-grande" id="iniciar">Iniciar charla</button>
+        <p class="aviso-chico">Si no escribís nada en 10 minutos, o cerrás la página, la charla se termina sola.</p>
+      </div>
+    </div>
+  </div>
+  <div class="charla-pie" id="charla-pie" hidden>
+    <div class="ancho">
+      <div class="acciones">
+        <button class="boton-borde" id="novedades">Novedades</button>
+        <button class="boton-borde terminar" id="terminar">Terminar charla</button>
+      </div>
+      <form class="entrada" id="form">
+        <textarea id="texto" rows="1" placeholder="Escribile…" autocomplete="off" aria-label="Mensaje"></textarea>
+        <button class="enviar" id="enviar" aria-label="Enviar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
 
 <script>
 const $ = (s) => document.querySelector(s);
-let sesion = null;
+const MIN_CHARLA = 10 * 60;
 let clave = new URLSearchParams(location.search).get("clave");
 try {
   if (clave) { localStorage.setItem("angri-clave", clave); history.replaceState(null, "", "/"); }
   else clave = localStorage.getItem("angri-clave");
 } catch (e) {}
 
+function el(tag, clase, texto) {
+  const e = document.createElement(tag);
+  if (clase) e.className = clase;
+  if (texto != null) e.textContent = texto;
+  return e;
+}
+const quitarMarcas = (t) => (t || "").replace(/\*\*/g, "").replace(/\*/g, "");
+
 function pedirClave() {
-  $("main").innerHTML = '<div id="clave"><p>Falta la clave. En angri, corré <code>angri web</code> y abrí el enlace que muestra, o pegá la clave acá:</p>'
-    + '<input id="c" autocomplete="off"><button class="chips" id="ok">Entrar</button></div>';
-  $("#ok").onclick = () => { try { localStorage.setItem("angri-clave", $("#c").value.trim()); } catch (e) {} location.reload(); };
+  document.body.replaceChildren();
+  const c = el("div", "hoja"); c.id = "clave";
+  c.append(el("p", "", "Falta la clave. En angri, corré angri web y abrí el enlace que muestra, o pegala acá:"));
+  const i = el("input"); i.autocomplete = "off";
+  const b = el("button", "boton-grande", "Entrar");
+  b.onclick = () => { try { localStorage.setItem("angri-clave", i.value.trim()); } catch (e) {} location.reload(); };
+  c.append(i, b); document.body.append(c);
 }
 
-async function api(ruta, cuerpo) {
+async function api(ruta, cuerpo, extra = {}) {
   const r = await fetch(ruta, {
     method: cuerpo ? "POST" : "GET",
     headers: { "X-Clave": clave || "", "Content-Type": "application/json" },
-    body: cuerpo ? JSON.stringify({ ...cuerpo, sesion }) : undefined,
+    body: cuerpo ? JSON.stringify(cuerpo) : undefined, ...extra,
   });
   if (r.status === 401) { pedirClave(); throw new Error("clave"); }
   const datos = await r.json();
-  if (datos.sesion) sesion = datos.sesion;
-  if (!r.ok) throw new Error(datos.error || "error");
+  if (!r.ok) { const e = new Error(datos.error || "error"); e.status = r.status; throw e; }
   return datos;
 }
 
-function burbuja(quien, texto) {
-  const d = document.createElement("div");
-  d.className = "msg " + quien;
-  d.textContent = texto;
-  $("#charla").appendChild(d);
-  $("#charla").scrollTop = $("#charla").scrollHeight;
-  return d;
+/* ---------- orbe: una forma orgánica que respira ---------- */
+function dibujarOrbe(contenedor) {
+  contenedor.innerHTML = `
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <defs>
+        <radialGradient id="g-${contenedor.id}" cx="38%" cy="34%" r="70%">
+          <stop offset="0" stop-color="var(--ocre)" stop-opacity=".95"/>
+          <stop offset=".6" stop-color="var(--ocre)" stop-opacity=".55"/>
+          <stop offset="1" stop-color="var(--salvia)" stop-opacity=".55"/>
+        </radialGradient>
+      </defs>
+      <circle class="halo" cx="60" cy="60" r="52" fill="var(--ocre)" opacity=".2"/>
+      <path class="forma" fill="url(#g-${contenedor.id})"
+        d="M60,14 C82,14 104,30 104,56 C104,84 86,106 60,106 C34,106 16,86 16,60 C16,34 36,14 60,14 Z">
+        <animate attributeName="d" dur="9s" repeatCount="indefinite" calcMode="spline"
+          keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1"
+          values="M60,14 C82,14 104,30 104,56 C104,84 86,106 60,106 C34,106 16,86 16,60 C16,34 36,14 60,14 Z;
+                  M60,18 C86,12 106,36 100,60 C96,86 80,104 56,102 C30,100 14,82 18,56 C22,32 38,22 60,18 Z;
+                  M62,14 C84,18 102,34 102,60 C102,82 82,104 58,104 C34,104 18,84 18,62 C18,36 40,10 62,14 Z;
+                  M60,14 C82,14 104,30 104,56 C104,84 86,106 60,106 C34,106 16,86 16,60 C16,34 36,14 60,14 Z"/>
+      </path>
+    </svg>`;
 }
-function aviso(texto) {
-  const d = document.createElement("div");
-  d.className = "aviso"; d.textContent = texto;
-  $("#charla").appendChild(d);
-  return d;
+dibujarOrbe($("#orbe")); dibujarOrbe($("#orbe-charla"));
+
+/* ---------- tiempos ---------- */
+function hace(iso) {
+  if (!iso) return "";
+  const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+  if (s < 60) return "recién";
+  if (s < 3600) return `hace ${Math.round(s / 60)} min`;
+  if (s < 86400) return `hace ${Math.round(s / 3600)} h`;
+  return `hace ${Math.round(s / 86400)} d`;
+}
+function enCuanto(iso) {
+  if (!iso) return "";
+  const s = Math.round((new Date(iso) - Date.now()) / 1000);
+  if (s <= 0) return "en un momento";
+  return `en ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+/* ---------- aparición al hacer scroll ---------- */
+const observador = "IntersectionObserver" in window
+  ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("visible"); observador.unobserve(e.target); } }), { threshold: .08 })
+  : null;
+function aparecer(nodo, i = 0) {
+  nodo.classList.add("aparece");
+  nodo.style.transitionDelay = `${Math.min(i, 8) * 55}ms`;
+  if (observador) observador.observe(nodo); else nodo.classList.add("visible");
+  return nodo;
 }
 
-let ocupado = false;
-async function enviar(ruta, cuerpo, mostrarVos) {
-  if (ocupado) return;
-  ocupado = true; $("#enviar").disabled = true;
-  if (mostrarVos) burbuja("vos", mostrarVos);
-  const espera = burbuja("angri pensando", "");
+document.querySelectorAll(".aparece").forEach((n, i) => aparecer(n, i));   // los que ya vienen en la página
+
+/* ---------- lo que estaba abierto se mantiene al refrescar ---------- */
+const abiertos = new Set();
+function desplegable(tarjeta, clave, contenido) {
+  const d = el("div", "desplegable"); const dentro = el("div"); dentro.append(contenido); d.append(dentro);
+  tarjeta.append(d);
+  if (abiertos.has(clave)) tarjeta.classList.add("abierto");
+  tarjeta.onclick = (e) => {
+    if (e.target.closest("a")) return;
+    tarjeta.classList.toggle("abierto");
+    tarjeta.classList.contains("abierto") ? abiertos.add(clave) : abiertos.delete(clave);
+  };
+}
+
+/* ---------- render del panel ---------- */
+const NOMBRE_ACT = { azar: "leyendo", objetivo: "investigando", repasar: "repasando", conectar: "conectando",
+  pensar: "pensando", descansar: "descansando", falla: "con fallas" };
+let primeraVez = true, proximoIso = null, estadoActual = null;
+
+function renderAhora(s) {
+  const si = s.situacion;
+  $("#orbe").dataset.tipo = si.tipo; $("#orbe-charla").dataset.tipo = si.tipo;
+  $("#punto").className = "punto " + si.tipo;
+  $("#chip-texto").textContent = si.texto;
+  $("#que").textContent = si.texto + (si.tipo === "activa" ? "…" : "");
+  let detalle = si.detalle ? (si.actividad === "azar" ? `«${si.detalle}»` : si.detalle) : "";
+  if (si.tipo === "esperando" && si.ultimo) detalle = `Lo último: ${si.ultimo.resultado || si.ultimo.actividad}`;
+  if (si.tipo === "charlando") detalle = "Está con vos en la charla.";
+  $("#detalle").textContent = detalle;
+  const meta = $("#meta"); meta.replaceChildren();
+  const item = (etq, val) => { const s = el("span"); s.append(etq + " "); s.append(el("b", "", val)); meta.append(s); };
+  if (si.desde) item("Empezó", hace(si.desde));
+  if (si.tipo === "esperando" && si.ultimo) item("Terminó", hace(si.ultimo.fecha));
+  proximoIso = s.proximo;
+  if (s.proximo && !["charlando", "pausa", "durmiendo"].includes(si.tipo)) { const sp = el("span"); sp.id = "prox"; meta.append(sp); }
+  pintarProximo();
+}
+function pintarProximo() {
+  const sp = $("#prox"); if (!sp) return;
+  sp.replaceChildren("Próximo ciclo ", el("b", "", enCuanto(proximoIso)));
+}
+
+function animarNumero(nodo, hasta) {
+  const desde = Number(nodo.dataset.v || 0); nodo.dataset.v = hasta;
+  if (desde === hasta || matchMedia("(prefers-reduced-motion: reduce)").matches) { nodo.textContent = hasta; return; }
+  const t0 = performance.now(), dur = 700;
+  const paso = (t) => { const p = Math.min(1, (t - t0) / dur); nodo.textContent = Math.round(desde + (hasta - desde) * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(paso); };
+  requestAnimationFrame(paso);
+}
+function renderCifras(s) {
+  const c = $("#cifras");
+  const datos = [["lecturas", s.cifras.lecturas, "lecturas en total"], ["hoy", s.cifras.lecturas_hoy, "lecturas hoy"],
+    ["notas", s.cifras.notas, "notas respaldadas"], ["preguntas", s.cifras.preguntas, "preguntas abiertas"]];
+  if (!c.children.length) datos.forEach(([k], i) => { const d = aparecer(el("div", "hoja cifra"), i); d.append(el("b"), el("span")); d.dataset.k = k; c.append(d); });
+  datos.forEach(([k, v, t]) => { const d = c.querySelector(`[data-k="${k}"]`); animarNumero(d.querySelector("b"), v); d.querySelector("span").textContent = t; });
+  $("#dias").textContent = s.cifras.dias ? `día ${s.cifras.dias}` : "";
+  const hoy = $("#hoy"); hoy.replaceChildren();
+  Object.entries(s.actividades_hoy || {}).sort((a, b) => b[1] - a[1]).forEach(([m, n]) =>
+    hoy.append(el("span", "etiqueta" + (m === "falla" ? "" : m === "descansar" ? " salvia" : " ocre"), `${n} ${NOMBRE_ACT[m] || m}`)));
+  if (s.mensajes_sin_leer) hoy.append(el("span", "etiqueta ocre", `${s.mensajes_sin_leer} cosa${s.mensajes_sin_leer > 1 ? "s" : ""} para contarte`));
+}
+
+function vacio(texto) { return el("p", "vacio", texto); }
+
+function renderQuien(s) {
+  const c = $("#quien-cuerpo"); c.replaceChildren();
+  if (s.quien_soy) {
+    const q = aparecer(el("div", "hoja quien"));
+    q.append(el("p", "", s.quien_soy));
+    const pie = el("div", "pie");
+    if (s.genero) pie.append(el("span", "", `Eligió que hablen de Angri ${s.genero.valor === "neutro" ? "sin marcar género" : "en " + s.genero.valor}`));
+    q.append(pie); c.append(q);
+  } else c.append(vacio("Todavía no escribió sobre sí. Lo hace por primera vez cuando duerma (a las 4 de la mañana)."));
+  if (s.resumen) {
+    const r = aparecer(el("div", "hoja resumen"), 1);
+    r.append(el("h3", "", `Su resumen del ${s.resumen.fecha.split("-").reverse().slice(0, 2).join("/")}`), el("p", "", s.resumen.texto));
+    c.append(r);
+  }
+}
+
+function renderTemas(s) {
+  const c = $("#temas-cuerpo"); c.replaceChildren();
+  if (!s.temas.length) return c.append(vacio("Ningún tema todavía. Aparecen solos cuando junta tres notas parecidas."));
+  const max = Math.max(...s.temas.map((t) => t.peso), 0.01);
+  s.temas.forEach((t, i) => {
+    const d = aparecer(el("div", "hoja tema"), i);
+    const fila = el("div", "fila"); fila.append(el("h3", "", t.nombre), el("span", "n", `${t.notas} notas`));
+    const b = el("div", "barra-peso"); const relleno = el("div"); b.append(relleno);
+    d.append(fila, b);
+    requestAnimationFrame(() => requestAnimationFrame(() => { relleno.style.width = `${Math.max(6, 100 * t.peso / max)}%`; }));
+    desplegable(d, "tema:" + t.nombre, el("div", "entendi", t.entendi || "Todavía no escribió lo que entendió de este tema."));
+    c.append(d);
+  });
+}
+
+function renderPreguntas(s) {
+  const c = $("#preguntas-cuerpo"); c.replaceChildren();
+  if (s.investigando.length) {
+    const g = el("div", "dos-col");
+    s.investigando.forEach((o, i) => {
+      const d = aparecer(el("div", "hoja investigacion"), i);
+      d.append(el("p", "", quitarMarcas(o.pregunta)));
+      const p = el("div", "pasos"); for (let k = 0; k < o.presupuesto; k++) p.append(el("i", k < o.gastado ? "lleno" : ""));
+      d.append(p, el("div", "pasos-txt", `investigando · ${o.gastado} de ${o.presupuesto} lecturas`));
+      g.append(d);
+    });
+    c.append(g);
+  }
+  if (s.preguntas.length) {
+    const ul = el("ul", "lista-preguntas");
+    s.preguntas.forEach((p, i) => ul.append(aparecer(el("li", "", quitarMarcas(p.texto)), i)));
+    c.append(ul);
+  }
+  if (!s.investigando.length && !s.preguntas.length) c.append(vacio("Sin preguntas por ahora. Le surgen al leer."));
+  if (s.cerradas.length) {
+    const t = el("h3", ""); t.style.cssText = "font:600 13px var(--mono);color:var(--gris);text-transform:uppercase;letter-spacing:.06em;margin:22px 0 4px";
+    t.textContent = "Cerradas"; c.append(t);
+    s.cerradas.forEach((o, i) => {
+      const d = aparecer(el("div", "hoja cerrada"), i);
+      const etq = { respondido: ["respondida", "salvia"], agotado: ["sin respuesta", ""], sin_presupuesto: ["se le acabaron las lecturas", ""], fallido: ["falló", ""] }[o.estado] || [o.estado, ""];
+      const q = el("p", "q", quitarMarcas(o.pregunta) + " "); q.append(el("span", "etiqueta " + etq[1], etq[0]));
+      d.append(q); if (o.respuesta) d.append(el("p", "r", o.respuesta));
+      c.append(d);
+    });
+  }
+}
+
+function renderNotas(s) {
+  const c = $("#notas-cuerpo"); c.replaceChildren();
+  if (!s.notas.length) return c.append(vacio("El cuaderno está vacío. Se llena con cada lectura que pasa los controles."));
+  const caja = el("div", "notas");
+  s.notas.forEach((n, i) => {
+    const d = aparecer(el("article", "hoja nota"), i);
+    const de = el("div", "de"); de.append(el("span", "", hace(n.fecha)));
+    if (n.estado === "confirmada") de.append(el("span", "etiqueta salvia", "confirmada"));
+    d.append(de, el("h3", "", n.titulo), el("p", "texto", n.resumen));
+    const extra = el("div"); extra.append(el("blockquote", "cita", "“" + n.cita + "”"));
+    if (n.url) { const a = el("a", "fuente", "Leer en Wikipedia ↗"); a.href = n.url; a.target = "_blank"; a.rel = "noopener noreferrer"; extra.append(a); }
+    desplegable(d, "nota:" + n.titulo, extra);
+    caja.append(d);
+  });
+  c.append(caja);
+}
+
+function renderConexiones(s) {
+  const c = $("#conexiones-cuerpo"); c.replaceChildren();
+  if (!s.conexiones.length) return c.append(vacio("Todavía no unió dos cosas. Empieza cuando tenga varias notas."));
+  s.conexiones.forEach((x, i) => {
+    const d = aparecer(el("div", "hoja conexion"), i);
+    const par = el("div", "par"); par.append(el("span", "", x.a));
+    par.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg>');
+    par.append(el("span", "", x.b));
+    d.append(par, el("p", "", x.texto)); c.append(d);
+  });
+}
+
+function renderDeFran(s) {
+  const c = $("#defran-cuerpo"); c.replaceChildren();
+  if (!s.de_fran.length) return c.append(vacio("Cuando te pregunte algo y le contestes en la charla, aparece acá. Lo guarda como lo que le contaste vos, aparte de lo que lee."));
+  s.de_fran.forEach((x, i) => {
+    const d = aparecer(el("div", "hoja de-fran"), i);
+    d.append(el("p", "q", "Le preguntó: " + x.pregunta), el("blockquote", "", "“" + x.respuesta + "”"));
+    c.append(d);
+  });
+}
+
+function renderDiario(s) {
+  const c = $("#diario-cuerpo"); c.replaceChildren();
+  if (!s.diario.length) return c.append(vacio("Todavía no escribió nada."));
+  const ul = el("ul", "linea-tiempo"); let dia = null;
+  const hoyIso = new Date().toISOString().slice(0, 10);
+  s.diario.forEach((l, i) => {
+    if (l.fecha !== dia) { dia = l.fecha; const li = el("li"); li.append(el("span", "dia", l.fecha === hoyIso ? "hoy" : l.fecha.split("-").reverse().join("/"))); li.classList.add("dia-fila"); ul.append(li); li.style.cssText = "padding:4px 0"; }
+    const li = aparecer(el("li"), i); li.append(el("time", "", l.hora), el("p", "", l.texto)); ul.append(li);
+  });
+  c.append(ul);
+}
+
+function renderSalud(s) {
+  const c = $("#salud-cuerpo"); c.replaceChildren();
+  const g = el("div", "salud");
+  if (!s.vigilancia.length) g.append(aparecer(el("div", "hoja", "Todo normal: no hay ningún ajuste activo.")));
+  s.vigilancia.forEach((v, i) => g.append(aparecer(el("div", "hoja", `Ajuste activo hasta las ${v.hasta.slice(11, 16)}: ${v.motivo}`), i)));
+  c.append(g);
+}
+
+async function cargar() {
   try {
-    const d = await api(ruta, cuerpo);
-    if (d.texto) { espera.className = "msg angri"; espera.textContent = d.texto; }
-    else espera.remove();
-    return d;
+    const s = await api("/api/estado");
+    estadoActual = s;
+    renderAhora(s); renderCifras(s);
+    if (primeraVez || !document.querySelector(".tema.abierto, .nota.abierto")) {
+      renderQuien(s); renderTemas(s); renderPreguntas(s); renderNotas(s); renderConexiones(s); renderDeFran(s); renderDiario(s); renderSalud(s);
+    }
+    primeraVez = false;
+    $("#actualizado").textContent = "actualizado " + new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  } catch (e) { if (e.message !== "clave") $("#chip-texto").textContent = "sin conexión con angri"; }
+}
+
+/* índice: marca la sección visible */
+const secciones = [...document.querySelectorAll("main section")];
+const enlaces = [...document.querySelectorAll(".indice a")];
+if ("IntersectionObserver" in window) {
+  const io = new IntersectionObserver((es) => es.forEach((e) => {
+    if (e.isIntersecting) {
+      enlaces.forEach((a) => a.classList.toggle("activo", a.getAttribute("href") === "#" + e.target.id));
+      const activo = enlaces.find((a) => a.classList.contains("activo"));
+      if (activo && innerWidth <= 860) activo.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    }
+  }), { rootMargin: "-45% 0px -50% 0px" });
+  secciones.forEach((s) => io.observe(s));
+}
+
+/* ======================= CHARLA ======================= */
+let sesion = null, ocupado = false, restante = MIN_CHARLA, finCharla = 0, latidoId = null, relojId = null;
+const arco = $("#reloj-arco"); const LARGO = 2 * Math.PI * 13;
+arco.style.strokeDasharray = LARGO;
+
+function abrirCharla() {
+  $("#charla").classList.add("abierta"); document.body.style.overflow = "hidden";
+  history.pushState({ charla: true }, "");
+}
+function cerrarCharla() {
+  if (sesion) return;   // con la charla activa no se puede volver: primero hay que terminarla
+  $("#charla").classList.remove("abierta"); document.body.style.overflow = "";
+}
+$("#abrir-charla").onclick = abrirCharla;
+$("#volver").onclick = () => { if (!sesion) history.state?.charla ? history.back() : cerrarCharla(); };
+addEventListener("popstate", () => { if (sesion) history.pushState({ charla: true }, ""); else cerrarCharla(); });
+
+function burbuja(quien, texto) {
+  const m = el("div", "mensaje " + quien);
+  if (quien === "angri") { const a = el("div", "avatar"); a.id = "av" + Math.random().toString(36).slice(2); dibujarOrbe(a); m.append(a); }
+  const b = el("div", "burbuja"); if (texto != null) b.textContent = texto; m.append(b);
+  $("#mensajes").append(m);
+  const cuerpo = $("#charla-cuerpo"); cuerpo.scrollTop = cuerpo.scrollHeight;
+  return b;
+}
+function escribiendo() {
+  const b = burbuja("angri"); b.classList.add("escribiendo"); b.innerHTML = "<span></span><span></span><span></span>";
+  return b.parentElement;
+}
+
+function pintarReloj() {
+  const s = Math.max(0, Math.round((finCharla - Date.now()) / 1000));
+  $("#reloj-txt").textContent = mmss(s);
+  arco.style.strokeDashoffset = LARGO * (1 - s / MIN_CHARLA);
+  $("#reloj").classList.toggle("poco", s < 90);
+  if (s === 0 && sesion) charlaCerrada("Pasaron 10 minutos sin mensajes: la charla se cerró sola y Angri siguió con lo suyo.");
+}
+function ponerReloj(seg) { finCharla = Date.now() + seg * 1000; pintarReloj(); }
+
+function modoCharla(activa) {
+  $("#volver").disabled = activa; $("#abrir-charla").disabled = activa;
+  $("#charla-pie").hidden = !activa; $("#reloj").hidden = !activa;
+  $("#charla-sub").textContent = activa ? "Angri dejó lo que hacía y te está escuchando" : "Todavía no empezó";
+  clearInterval(latidoId); clearInterval(relojId);
+  if (activa) {
+    latidoId = setInterval(async () => {
+      try { const d = await api("/api/charla/latido", { sesion }); ponerReloj(d.restante); }
+      catch (e) { if (e.status === 409) charlaCerrada("La charla se cerró."); }
+    }, 30000);
+    relojId = setInterval(pintarReloj, 1000);
+  }
+}
+
+async function iniciar() {
+  const b = $("#iniciar"); b.disabled = true; b.textContent = "Avisándole…";
+  try {
+    const d = await api("/api/charla/iniciar", { sesion });
+    sesion = d.sesion;
+    $("#inicio-charla").remove();
+    const nombres = { azar: "lo que estaba leyendo", objetivo: "lo que estaba investigando", repasar: "sus repasos", conectar: "lo que estaba conectando", pensar: "lo que estaba pensando", descansar: "su descanso", dormir: "su sueño" };
+    burbuja("sistema", d.cortado ? `Angri dejó ${nombres[d.cortado] || "lo que hacía"} para charlar con vos.` : "Charla iniciada.");
+    modoCharla(true); ponerReloj(d.restante);
+    if (d.texto) burbuja("angri", d.texto);
+    $("#texto").focus();
+  } catch (e) {
+    b.disabled = false; b.textContent = "Iniciar charla";
+    if (e.message !== "clave") burbuja("sistema", "No pude iniciar la charla: " + e.message);
+  }
+}
+$("#iniciar").onclick = iniciar;
+
+async function enviar(ruta, cuerpo, mostrar) {
+  if (ocupado || !sesion) return;
+  ocupado = true; $("#enviar").disabled = true;
+  if (mostrar) burbuja("vos", mostrar);
+  const espera = escribiendo();
+  try {
+    const d = await api(ruta, { ...cuerpo, sesion });
+    espera.remove(); burbuja("angri", d.texto); ponerReloj(d.restante);
   } catch (e) {
     espera.remove();
-    if (e.message !== "clave") aviso(e.message);
+    if (e.status === 409) charlaCerrada(e.message); else if (e.message !== "clave") burbuja("sistema", e.message);
   } finally {
     ocupado = false; $("#enviar").disabled = false;
-    $("#charla").scrollTop = $("#charla").scrollHeight;
   }
 }
-
 $("#form").onsubmit = (e) => {
   e.preventDefault();
-  const t = $("#entrada").value.trim();
-  if (!t || ocupado) return;
-  $("#entrada").value = ""; $("#entrada").style.height = "";
+  const t = $("#texto").value.trim(); if (!t || ocupado) return;
+  $("#texto").value = ""; $("#texto").style.height = "";
   enviar("/api/mensaje", { texto: t }, t);
 };
-$("#entrada").addEventListener("keydown", (e) => {
+$("#texto").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey && !matchMedia("(pointer: coarse)").matches) { e.preventDefault(); $("#form").requestSubmit(); }
 });
-$("#entrada").addEventListener("input", (e) => { e.target.style.height = ""; e.target.style.height = e.target.scrollHeight + "px"; });
-$("#btn-novedades").onclick = () => enviar("/api/novedades", {}, "Novedades");
+$("#texto").addEventListener("input", (e) => { e.target.style.height = ""; e.target.style.height = e.target.scrollHeight + "px"; });
+$("#novedades").onclick = () => enviar("/api/novedades", {}, "Novedades");
 
-function el(tag, clase, texto) { const e = document.createElement(tag); if (clase) e.className = clase; if (texto != null) e.textContent = texto; return e; }
+async function terminar() {
+  if (!sesion) return;
+  const s = sesion; sesion = null;
+  try { await api("/api/charla/terminar", { sesion: s }); } catch (e) {}
+  charlaCerrada("Charla terminada. Angri sigue con lo suyo.");
+}
+$("#terminar").onclick = terminar;
 
-async function cargarEstado() {
-  const s = await api("/api/estado");
-  $("#situacion").textContent = s.situacion + (s.mensajes_sin_leer ? ` · ${s.mensajes_sin_leer} sin leer` : "");
-  const a = $("#anda"); a.replaceChildren();
-  const cifras = el("div", "cifras");
-  for (const [n, t] of [[s.lecturas_hoy, "lecturas hoy"], [s.notas_total, "notas"], [s.temas.length, "temas"]]) {
-    const c = el("div", "tarjeta"); c.append(el("b", "", n), el("span", "chico", t)); cifras.append(c);
-  }
-  a.append(cifras);
-  if (s.quien_soy) { a.append(el("h2", "", "Quién es (lo escribió Angri)")); a.append(el("div", "tarjeta", s.quien_soy)); }
-  a.append(el("h2", "", "Lo que le interesa"));
-  if (!s.temas.length) a.append(el("p", "chico", "Todavía no se formó ningún tema."));
-  for (const t of s.temas) { const c = el("div", "tarjeta"); c.append(el("div", "", t.nombre), el("div", "chico", `${t.notas} notas · peso ${t.peso}`)); a.append(c); }
-  a.append(el("h2", "", "Investigando"));
-  if (!s.investigando.length) a.append(el("p", "chico", "Nada abierto ahora."));
-  for (const o of s.investigando) {
-    const c = el("div", "tarjeta"); c.append(el("div", "", o.pregunta), el("div", "chico", `${o.gastado} de ${o.presupuesto} lecturas`));
-    const b = el("div", "barra"), r = el("div"); r.style.width = (100 * o.gastado / o.presupuesto) + "%"; b.append(r); c.append(b); a.append(c);
-  }
-  if (s.cerradas.length) {
-    a.append(el("h2", "", "Cerradas"));
-    for (const o of s.cerradas) { const c = el("div", "tarjeta"); c.append(el("div", "", o.pregunta), el("div", "chico", o.respuesta || o.estado)); a.append(c); }
-  }
-  a.append(el("h2", "", "Diario de hoy"));
-  if (!s.diario.length) a.append(el("p", "chico", "Hoy todavía no escribió nada."));
-  for (const l of s.diario) a.append(el("div", "tarjeta", l.replace(/\*\*/g, "").replace(/\*/g, "")));
+function charlaCerrada(texto) {
+  sesion = null; modoCharla(false);
+  burbuja("sistema", texto);
+  // botón para empezar otra: limpia la conversación anterior y arranca de nuevo
+  const otra = el("div", "inicio-charla"); otra.id = "inicio-charla"; otra.style.marginTop = "18px";
+  const b = el("button", "boton-grande", "Iniciar otra charla"); b.id = "iniciar";
+  b.onclick = () => { document.querySelectorAll("#mensajes .mensaje").forEach((m) => m.remove()); iniciar(); };
+  otra.append(b); $("#mensajes").append(otra);
+  cargar();
 }
 
-document.querySelectorAll("nav button").forEach((b) => b.onclick = () => {
-  document.querySelectorAll("nav button").forEach((x) => x.setAttribute("aria-selected", x === b));
-  document.querySelectorAll("section").forEach((x) => x.classList.toggle("activa", x.id === b.dataset.ver));
-  const charla = b.dataset.ver === "charla";
-  $("#form").style.display = charla ? "" : "none";
-  $("#chips").style.display = charla ? "" : "none";
-  if (!charla) cargarEstado().catch(() => {});
+/* si se cierra la página con la charla abierta, se termina sola (y si no llega, el servidor la cierra por falta de latido) */
+addEventListener("pagehide", () => {
+  if (sesion) fetch("/api/charla/terminar", { method: "POST", keepalive: true,
+    headers: { "Content-Type": "application/json", "X-Clave": clave || "" }, body: JSON.stringify({ sesion }) });
 });
+addEventListener("beforeunload", (e) => { if (sesion) { e.preventDefault(); e.returnValue = ""; } });
 
-(async () => {
-  if (!clave) return pedirClave();
-  try { await cargarEstado(); } catch (e) { return; }
-  const d = await enviar("/api/hola", {});
-  if (d && !d.texto) aviso("Sin novedades por ahora. Escribile lo que quieras.");
-})();
+/* ---------- arranque ---------- */
+if (!clave) pedirClave();
+else {
+  cargar();
+  setInterval(() => { if (!document.hidden) cargar(); }, 20000);
+  setInterval(pintarProximo, 1000);
+}
 </script>
 </body>
 </html>

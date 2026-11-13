@@ -507,6 +507,21 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   En la prueba con el modelo real eligió las 6 actividades en 8 intentos. Las conexiones se controlan por anclaje con las dos notas, y si no se pueden respaldar se descartan.
 - **Contador para Wikipedia en vez de tope diario:** al menos 3 segundos entre pedidos y como mucho 120 por hora; al llegar al máximo, espera sin contarlo como falla. El tope diario quedó solo como seguridad, en 400. Antes cortaba a las 60 lecturas y a las 22 h se quedaba sin nada para hacer.
 - **Renacer:** la noche del 12/11 se borró toda su memoria, porque tenía sesgos de las pruebas: temas forzados, charlas de prueba, el género elegido en una prueba. Fran pidió no guardar archivo. Se conservaron el código, la configuración, la clave de la web y el canal de ntfy. Su primera lectura en la vida nueva fue «Calle Nataniel Cox».
+- **Página nueva (12/11, noche)** (`web.html`, `web.py`, `ahora.py`).
+  - **El panel solo lee:** abrirlo ya no la interrumpe. Está ordenado como un cuaderno, en secciones numeradas:
+    1. Ahora (qué está haciendo, en vivo, y cuándo es el próximo ciclo)
+    2. Quién es
+    3. Le interesa
+    4. Se pregunta
+    5. Cuaderno (notas con su cita y su fuente)
+    6. Conexiones
+    7. Lo que le contaste
+    8. Diario
+    9. Salud
+  - **La charla es una pantalla aparte**, con inicio explícito. Al iniciarla se corta lo que esté haciendo (ciclo o sueño, con SIGTERM). El proceso sale prolijo y la base guarda todo o nada. En la prueba real cortó una lectura al azar en 0,3 s.
+  - **Mientras dura la charla:** no corre ningún ciclo y el botón de volver está bloqueado.
+  - **Cómo termina:** con el botón "Terminar charla", o sola si pasan 10 minutos sin mensajes (con un reloj visible) o si la página deja de dar señales por 90 s.
+  - Para saber qué está haciendo, cada ciclo escribe `EN_CICLO`.
 - **Respuestas y preguntas sobre "las notas" (12/11, noche).**
   - El cierre de una investigación guardó como respuesta un texto que hablaba de sus notas: "Las notas proporcionadas no mencionan nada sobre Phantom Girl…".
   - Primer arreglo: tirar la respuesta entera si hablaba de la fuente. Era demasiado bruto: borró la buena respuesta de Rumania por una sola oración final ("Las notas indican claramente…"). Se recuperó del log de llamadas.
