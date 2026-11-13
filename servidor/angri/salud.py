@@ -55,6 +55,18 @@ def descansando(con) -> str | None:
     return None
 
 
+def problemas_recientes(con, horas: int = 24) -> list[str]:
+    """Para la charla: las fallas de las últimas horas en palabras simples, así no dice 'no pasó nada'."""
+    desde = (datetime.now() - timedelta(hours=horas)).isoformat(timespec="seconds")
+    salida = []
+    for fecha, resultado in con.execute("SELECT fecha, resultado FROM ciclos WHERE modo='falla' AND fecha>=? ORDER BY id",
+                                        (desde,)):
+        parte = (resultado or "").split(":")[0] or "algo"
+        motivo = "no había internet en la casa" if "name resolution" in (resultado or "") else f"no respondía {parte}"
+        salida.append(f"a las {fecha[11:16]} {motivo}")
+    return salida
+
+
 def registrar_falla(con, exc: BaseException, objetivo_id: int | None, escribir_diario) -> None:
     parte = de_donde(exc)
     detalle = f"{parte}: {type(exc).__name__}: {exc}"[:300]

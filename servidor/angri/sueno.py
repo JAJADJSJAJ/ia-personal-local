@@ -216,7 +216,8 @@ def dormir() -> str:
         con.commit()
         # Fase E: reflexión. Cada paso por separado: si el modelo falla en uno, los otros siguen.
         # Si la vigilancia vio que lo que escribe sobre sí ya casi no cambia, descansa de reflexionar unos días.
-        pasos = [reflexion.decidir_genero]
+        # El género no se le pregunta: si algún día lo trae, que salga de ella (Fran, 13/11).
+        pasos = []
         if vigilancia.ajuste(con, "pausa_reflexion"):
             informe.append("sin reflexión: pausa puesta por la vigilancia")
         else:
@@ -224,7 +225,7 @@ def dormir() -> str:
         for paso in pasos:
             try:
                 if r := paso(con):
-                    informe.append(r if paso is not reflexion.decidir_genero else f"decidí mi género: {r}")
+                    informe.append(r)
             except OSError:
                 informe.append(f"{paso.__name__}: el modelo no respondió")
         con.commit()

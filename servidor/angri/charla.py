@@ -47,6 +47,10 @@ def actualidad(con) -> str:
     if descanso := salud.descansando(con):
         plan = f"ahora estás {descanso} porque algo no respondía; después: " + plan
     lineas.append("- Lo que vas a hacer más tarde: " + plan)
+    problemas = salud.problemas_recientes(con)
+    lineas.append("- Problemas en las últimas 24 horas: " + (
+        "; ".join(problemas) + " (ese ciclo no pudiste hacer lo que ibas a hacer; no fue culpa tuya)" if problemas
+        else "ninguno"))
     from . import dudas, sueno
     contadas = dudas.respondidas(con)[-5:]
     if contadas:

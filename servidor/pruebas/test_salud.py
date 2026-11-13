@@ -29,6 +29,14 @@ class Salud(unittest.TestCase):
             fecha = (datetime.now() - timedelta(minutes=hace_min)).isoformat(timespec="seconds")
             self.con.execute("UPDATE ciclos SET fecha=? WHERE id=(SELECT MAX(id) FROM ciclos)", (fecha,))
 
+    def test_problemas_recientes_para_la_charla(self):
+        self.assertEqual(salud.problemas_recientes(self.con), [])
+        self.fallar(mensaje="Temporary failure in name resolution")
+        self.fallar(hace_min=60 * 30)   # de hace más de un día: no cuenta
+        p = salud.problemas_recientes(self.con)
+        self.assertEqual(len(p), 1)
+        self.assertIn("no había internet", p[0])
+
     def test_espera_crece_con_tope(self):
         self.assertEqual(salud.espera_minutos(2), 0)
         self.assertEqual(salud.espera_minutos(3), 60)
