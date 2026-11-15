@@ -106,6 +106,16 @@ class Actividades(unittest.TestCase):
         self.assertIn("conecté", r)
 
 
+class SinRelacion(unittest.TestCase):
+    def test_negativas_no_son_conexiones(self):
+        for t in ("NADA.", "No hay nada en común porque Sheridan está en Montana.",
+                  "No hay relación porque una es la historia de otra persona.", "Ninguna relación entre ambos."):
+            self.assertTrue(actividades.sin_relacion(t), t)
+        for t in ("Ambos fueron académicos y decanos de sus universidades.",
+                  "No solo fueron académicos: ambos presidieron universidades."):
+            self.assertFalse(actividades.sin_relacion(t), t)
+
+
 class Contador(unittest.TestCase):
     def test_limite_por_hora(self):
         (config.DATOS / "wikipedia.json").write_text(json.dumps(

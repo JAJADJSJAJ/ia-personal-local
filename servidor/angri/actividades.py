@@ -19,6 +19,7 @@ Si el modelo no responde algo claro, se sortea entre las posibles.
 import json
 import random
 import re
+import re
 import time
 
 import numpy as np
@@ -153,6 +154,18 @@ def repasar(con) -> tuple[str, int | None]:
     return f"repasé «{titulo}» sin pregunta nueva", None
 
 
+_SIN_RELACION = re.compile(
+    r"^\s*(nada\b|no hay (nada|relaci|v[ií]nculo|conexi)|no (tienen|comparten|guardan|existe|veo|encuentro|encontr)"
+    r"|ninguna? (relaci|conexi|v[ií]nculo)|sin relaci)"
+    r"|\b(no tienen nada en com[uú]n|no hay nada en com[uú]n|no guardan (ning[uú]n|relaci)|ninguna relaci[oó]n)",
+    re.IGNORECASE)
+
+
+def sin_relacion(texto: str) -> bool:
+    """El modelo a veces 'conecta' diciendo que no hay conexión: eso no es un hallazgo."""
+    return bool(_SIN_RELACION.search(texto))
+
+
 def conectar(con) -> tuple[str, int | None]:
     """Dos notas de lecturas distintas, ni iguales ni sin relación, y ver si tienen algo en común."""
     filas = con.execute(
@@ -173,7 +186,7 @@ def conectar(con) -> tuple[str, int | None]:
     texto = modelo.llamar("conectar", PEDIDO_CONECTAR.format(t1=a[2], r1=a[3], t2=b[2], r2=b[3]),
                           sistema=SISTEMA_PENSAR).strip().replace("*", "")
     fuente = f"{a[2]} {a[3]} {b[2]} {b[3]}"
-    valida = (not texto.upper().startswith("NADA") and len(texto) > 30
+    valida = (not sin_relacion(texto) and len(texto) > 30
               and verificar.anclaje(texto, fuente) >= config.ANCLAJE_MINIMO
               and not verificar.habla_de_la_fuente(texto) and not verificar.parece_orden(texto))
     con.execute("INSERT INTO conexiones (fecha, nota_a, nota_b, texto, valida) VALUES (?, ?, ?, ?, ?)",
