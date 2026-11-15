@@ -1,0 +1,69 @@
+/* base.css: los colores, las medidas y la tipografía. Todo lo demás usa estas variables:
+   para cambiar el tono de la página alcanza con tocar este archivo. */
+
+:root {
+  color-scheme: light dark;
+
+  /* superficie */
+  --fondo: #e6eeef; --fondo-2: #d9e5e7;
+  --panel: #f5f9f9; --pieza: #eaf1f2;
+  --linea: #cbd9dc; --linea-suave: #dde7e9;
+
+  /* texto */
+  --tinta: #1f2f36; --tinta-2: #43575f; --tenue: #6b7f86;
+
+  /* acentos: cian grisáceo, verde agua y azul niebla */
+  --acento: #3a7885; --acento-suave: #d5e7ea; --sobre-acento: #ffffff;
+  --agua: #4f8576; --agua-suave: #d9e9e3;
+  --niebla: #5c789a; --niebla-suave: #dde5ef;
+  --alerta: #a35a53;
+  --claro: #eef7f8;          /* el brillo del orbe */
+  --orbe-a: #3a7885; --orbe-b: #4f8576;   /* los dos tonos del cuerpo del orbe */
+
+  --sombra: 0 1px 0 rgba(31,47,54,.03), 0 14px 34px -22px rgba(31,47,54,.28);
+
+  /* medidas */
+  --e1: 4px; --e2: 8px; --e3: 12px; --e4: 16px; --e5: 24px; --e6: 36px;
+  --radio: 20px; --radio-pieza: 14px; --radio-pastilla: 999px;
+  --alto-barra: 60px;
+
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --sans: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+
+  --suave: cubic-bezier(.2,.8,.2,1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #0f1719; --fondo-2: #0a1012;
+    --panel: #162125; --pieza: #1c2a2f;
+    --linea: #2a3b40; --linea-suave: #213034;
+    --tinta: #dfe9ea; --tinta-2: #b4c5c8; --tenue: #84999e;
+    --acento: #7dbac4; --acento-suave: #1f3a40; --sobre-acento: #0c1a1d;
+    --agua: #86bca9; --agua-suave: #1e352f;
+    --niebla: #93acc9; --niebla-suave: #212d3b;
+    --alerta: #dc9a90;
+    --claro: #d9f1f4;
+    --orbe-a: #3f8a98; --orbe-b: #3f8f7b;
+    --sombra: 0 1px 0 rgba(0,0,0,.2), 0 16px 36px -22px rgba(0,0,0,.7);
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; color: var(--tinta);
+  font: 16px/1.55 var(--sans);
+  background: linear-gradient(180deg, var(--fondo), var(--fondo-2)) fixed var(--fondo);
+}
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+h2, h3, p, blockquote { margin: 0; }
+::selection { background: var(--acento-suave); }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

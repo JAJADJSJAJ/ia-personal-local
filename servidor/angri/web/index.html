@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e6eeef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1719" media="(prefers-color-scheme: dark)">
+<title>Angri</title>
+<!-- Cada archivo hace una sola cosa: base (colores y medidas), mundo (el espacio 3D y sus paneles),
+     componentes (piezas que se repiten), panel (el contenido de cada panel) y charla. -->
+<link rel="stylesheet" href="/static/css/base.css">
+<link rel="stylesheet" href="/static/css/mundo.css">
+<link rel="stylesheet" href="/static/css/componentes.css">
+<link rel="stylesheet" href="/static/css/panel.css">
+<link rel="stylesheet" href="/static/css/charla.css">
+<script type="module" src="/static/js/principal.js"></script>
+</head>
+<body>
+
+<!-- Atajos para teclado y lectores de pantalla: abren los mismos paneles que las opciones 3D. -->
+<nav class="atajos" id="atajos" aria-label="Secciones"></nav>
+
+<!-- El mundo 3D ocupa toda la pantalla. Lo que sigue adentro son las partes con texto:
+     js/escena/ las toma y las pone a flotar en el espacio. -->
+<div class="mundo sin-tocar" id="mundo">
+
+  <!-- El cartel de arriba: qué está haciendo Angri ahora. -->
+  <div class="estado" id="estado">
+    <div class="marca">angri <small id="dias"></small></div>
+    <p class="que" id="que">Mirando qué está haciendo…</p>
+    <p class="detalle" id="detalle"></p>
+  </div>
+
+  <!-- Los paneles. Cada uno: cabecera (de ahí se arrastra) y cuerpo. data-panel es su nombre. -->
+  <section class="panel" data-panel="ahora" aria-label="Ahora">
+    <header class="panel-cabeza"><h2>Ahora</h2><span class="nota-lateral" id="actualizado"></span><button class="cerrar" aria-label="Cerrar Ahora"></button></header>
+    <div class="panel-cuerpo">
+      <div class="lista">
+        <div class="pieza ahora-estado">
+          <p class="que" id="que-panel"></p>
+          <p class="detalle" id="detalle-panel"></p>
+          <div class="meta" id="meta"></div>
+        </div>
+      </div>
+      <div class="cifras" id="cifras"></div>
+      <div class="etiquetas" id="hoy"></div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="quien" data-ancho="500" aria-label="Quién es">
+    <header class="panel-cabeza"><h2>Quién es</h2><span class="nota-lateral">lo escribe Angri cada noche</span><button class="cerrar" aria-label="Cerrar Quién es"></button></header>
+    <div class="panel-cuerpo" id="quien-cuerpo"></div>
+  </section>
+
+  <section class="panel" data-panel="temas" aria-label="Le interesa">
+    <header class="panel-cabeza"><h2>Le interesa</h2><span class="nota-lateral">son las lunas que giran</span><button class="cerrar" aria-label="Cerrar Le interesa"></button></header>
+    <div class="panel-cuerpo lista" id="temas-cuerpo"></div>
+  </section>
+
+  <section class="panel" data-panel="preguntas" aria-label="Se pregunta">
+    <header class="panel-cabeza"><h2>Se pregunta</h2><button class="cerrar" aria-label="Cerrar Se pregunta"></button></header>
+    <div class="panel-cuerpo" id="preguntas-cuerpo"></div>
+  </section>
+
+  <section class="panel" data-panel="conexiones" aria-label="Conexiones">
+    <header class="panel-cabeza"><h2>Conexiones</h2><span class="nota-lateral">cosas que unió Angri</span><button class="cerrar" aria-label="Cerrar Conexiones"></button></header>
+    <div class="panel-cuerpo lista" id="conexiones-cuerpo"></div>
+  </section>
+
+  <section class="panel" data-panel="cuaderno" aria-label="Cuaderno">
+    <header class="panel-cabeza"><h2>Cuaderno</h2><span class="nota-lateral">tocá una nota para ver la cita</span><button class="cerrar" aria-label="Cerrar Cuaderno"></button></header>
+    <div class="panel-cuerpo" id="notas-cuerpo"></div>
+  </section>
+
+  <section class="panel" data-panel="diario" aria-label="Diario">
+    <header class="panel-cabeza"><h2>Diario</h2><button class="cerrar" aria-label="Cerrar Diario"></button></header>
+    <div class="panel-cuerpo" id="diario-cuerpo"></div>
+  </section>
+
+  <section class="panel" data-panel="de-vos" aria-label="Lo que le contaste">
+    <header class="panel-cabeza"><h2>Lo que le contaste</h2><button class="cerrar" aria-label="Cerrar Lo que le contaste"></button></header>
+    <div class="panel-cuerpo lista" id="defran-cuerpo"></div>
+  </section>
+
+  <section class="panel" data-panel="salud" aria-label="Salud">
+    <header class="panel-cabeza"><h2>Salud</h2><span class="nota-lateral">la vigila el código, no el modelo</span><button class="cerrar" aria-label="Cerrar Salud"></button></header>
+    <div class="panel-cuerpo lista salud" id="salud-cuerpo"></div>
+  </section>
+
+  <!-- La charla: otro panel más, con su reloj y su caja para escribir. -->
+  <section class="panel charla" data-panel="charla" data-ancho="480" aria-label="Charla con Angri">
+    <header class="panel-cabeza">
+      <div class="titulo">
+        <h2>Charla con Angri</h2>
+        <div class="sub" id="charla-sub">Todavía no empezó</div>
+      </div>
+      <div class="reloj" id="reloj" hidden>
+        <span id="reloj-txt">10:00</span>
+        <svg viewBox="0 0 32 32"><circle class="fondo" cx="16" cy="16" r="13"/><circle class="avance" id="reloj-arco" cx="16" cy="16" r="13"/></svg>
+      </div>
+      <button class="cerrar" id="volver" aria-label="Cerrar la charla"></button>
+    </header>
+    <div class="charla-cuerpo" id="charla-cuerpo">
+      <div id="mensajes">
+        <div class="inicio-charla" id="inicio-charla">
+          <h3>¿Charlamos?</h3>
+          <p>Al empezar, Angri deja lo que esté haciendo, sin romper nada, y te presta atención. Cuando termines, sigue con lo suyo.</p>
+          <button class="boton grande" id="iniciar">Iniciar charla</button>
+          <p class="aviso-chico">Si no escribís nada en 10 minutos, o cerrás la página, la charla se termina sola.</p>
+        </div>
+      </div>
+    </div>
+    <div class="charla-pie" id="charla-pie" hidden>
+      <div class="acciones">
+        <button class="boton-borde" id="novedades">Novedades</button>
+        <button class="boton-borde terminar" id="terminar">Terminar charla</button>
+      </div>
+      <form class="entrada" id="form">
+        <textarea id="texto" rows="1" placeholder="Escribile…" autocomplete="off" aria-label="Mensaje"></textarea>
+        <button class="boton enviar" id="enviar" aria-label="Enviar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <p class="ayuda" id="ayuda">tocá una opción · arrastrá para girar</p>
+</div>
+
+</body>
+</html>

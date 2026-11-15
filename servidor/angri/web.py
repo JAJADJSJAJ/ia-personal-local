@@ -24,7 +24,9 @@ from urllib.parse import urlparse
 
 from . import ahora, bandeja, charla, config, memoria, reflexion, salud, sueno, temas, vigilancia
 
-PAGINA = Path(__file__).with_name("web.html")
+WEB = Path(__file__).with_name("web")    # index.html + css/ + js/ + vendor/ (three.js va adentro: la página no sale a internet)
+PAGINA = WEB / "index.html"
+TIPOS = {".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8"}
 _turno = threading.Lock()                 # una respuesta del modelo a la vez
 _historiales: dict[str, list] = {}        # sesion -> historial de la charla
 
@@ -152,10 +154,11 @@ class Manejador(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
-    def _responder(self, codigo: int, cuerpo: bytes, tipo="application/json; charset=utf-8"):
+    def _responder(self, codigo: int, cuerpo: bytes, tipo="application/json; charset=utf-8", cache="no-store"):
         self.send_response(codigo)
         self.send_header("Content-Type", tipo)
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(cuerpo)))
+        self.send_header("Cache-Control", cache)
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Content-Security-Policy",
                          "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:")
@@ -169,10 +172,23 @@ class Manejador(BaseHTTPRequestHandler):
         dada = self.headers.get("X-Clave", "") or (datos or {}).get("clave", "")
         return secrets.compare_digest(str(dada), clave())
 
+    def _estatico(self, ruta: str):
+        """Sirve css/js de la carpeta web/. Solo nombres simples y extensiones conocidas: nada sale de esa carpeta."""
+        partes = ruta.removeprefix("/static/").split("/")
+        archivo = WEB.joinpath(*partes)
+        if (not all(re.fullmatch(r"[\w][\w.-]*", p) for p in partes) or archivo.suffix not in TIPOS
+                or not archivo.is_file()):
+            return self._json({"error": "no existe"}, 404)
+        # three.js no cambia nunca: se guarda una semana. Lo propio se pide siempre de nuevo.
+        cache = "max-age=604800, immutable" if partes[0] == "vendor" else "no-store"
+        self._responder(200, archivo.read_bytes(), TIPOS[archivo.suffix], cache)
+
     def do_GET(self):
         ruta = urlparse(self.path).path
         if ruta == "/":
             return self._responder(200, PAGINA.read_bytes(), "text/html; charset=utf-8")
+        if ruta.startswith("/static/"):
+            return self._estatico(ruta)
         if ruta == "/api/estado":
             if not self._autorizado():
                 return self._json({"error": "clave"}, 401)

@@ -1,0 +1,51 @@
+/* componentes.css: las piezas chicas que se repiten en toda la página. */
+
+/* ---------- pieza: una tarjeta hundida dentro de un panel ---------- */
+.pieza { background: var(--pieza); border: 1px solid transparent; border-radius: var(--radio-pieza); padding: 14px var(--e4); }
+.pieza.tocable { cursor: pointer; transition: border-color .2s, background .2s; }
+.pieza.tocable:hover, .pieza.resaltada { border-color: var(--acento); }
+.lista { display: grid; gap: var(--e2); }
+
+.vacio { color: var(--tenue); font: italic 16.5px/1.5 var(--serif); }
+.subtitulo { font: 600 12px var(--mono); color: var(--tenue); text-transform: uppercase; letter-spacing: .07em; margin: var(--e5) 0 var(--e2); }
+
+/* ---------- etiquetas ---------- */
+.etiquetas { display: flex; flex-wrap: wrap; gap: 6px; }
+.etiqueta { font-size: 12.5px; padding: 3px 10px; border-radius: var(--radio-pastilla); background: var(--linea-suave); color: var(--tinta-2); white-space: nowrap; }
+.etiqueta.acento { background: var(--acento-suave); color: var(--acento); }
+.etiqueta.agua { background: var(--agua-suave); color: var(--agua); }
+
+/* ---------- botones ---------- */
+.boton {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--e2); flex: none; border: 0; cursor: pointer;
+  background: var(--acento); color: var(--sobre-acento); font-weight: 600; font-size: 15px;
+  padding: 9px 17px 9px 14px; border-radius: var(--radio-pastilla);
+  transition: transform .2s var(--suave), filter .2s, opacity .2s;
+}
+.boton:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06); }
+.boton:active:not(:disabled) { transform: translateY(1px) scale(.98); }
+.boton:disabled { opacity: .55; cursor: default; }
+.boton svg { width: 18px; height: 18px; }
+.boton.grande { font-size: 17px; padding: 13px 26px; }
+
+.boton-borde {
+  border: 1px solid var(--linea); background: var(--panel); padding: 6px 14px; border-radius: var(--radio-pastilla);
+  font-size: 14px; cursor: pointer; transition: border-color .2s;
+}
+.boton-borde:hover { border-color: var(--tenue); }
+.boton-borde.terminar { margin-left: auto; color: var(--alerta); border-color: color-mix(in srgb, var(--alerta) 40%, var(--linea)); }
+
+/* ---------- desplegable (temas y notas) ---------- */
+.desplegable { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
+.desplegable > div { overflow: hidden; }
+.abierto > .desplegable { grid-template-rows: 1fr; }
+
+/* ---------- Angri en chiquito, para sus mensajes en la charla ---------- */
+.orbe-mini {
+  width: 26px; height: 26px; flex: none; margin-top: 5px; border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%;
+  background: radial-gradient(circle at 36% 30%, var(--claro), var(--acento) 55%, var(--agua));
+}
+
+/* ---------- pedido de clave ---------- */
+#clave { max-width: 420px; margin: 12vh auto; padding: var(--e5); text-align: center; background: var(--panel); border-radius: var(--radio); box-shadow: var(--sombra); }
+#clave input { width: 100%; padding: 12px; font: inherit; border-radius: 12px; border: 1px solid var(--linea); background: var(--pieza); color: var(--tinta); margin: var(--e3) 0; }
