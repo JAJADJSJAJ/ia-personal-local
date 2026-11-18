@@ -208,15 +208,35 @@ def hechos_propios(con) -> list[str]:
     abiertas = [p for (p,) in con.execute("SELECT pregunta FROM objetivos WHERE estado='abierto' LIMIT 3")]
     if abiertas:
         hechos.append("Ahora estoy investigando: " + " | ".join(abiertas))
+    hoy = date.today().isoformat()
+    nuevas = [t for (t,) in con.execute("SELECT texto FROM preguntas WHERE fecha >= ? ORDER BY id DESC LIMIT 3", (hoy,))]
+    if nuevas:
+        hechos.append("Preguntas que me hice hoy: " + " | ".join(nuevas))
+    try:
+        conex = [t for (t,) in con.execute("SELECT texto FROM conexiones WHERE valida=1 AND fecha >= ? "
+                                           "ORDER BY id DESC LIMIT 2", (hoy,))]
+    except Exception:
+        conex = []
+    if conex:
+        hechos.append("Cosas que conecté hoy: " + " | ".join(" ".join(c.split())[:200] for c in conex))
     gen = genero(con)
     if gen:
         hechos.append(f"Elegí que hablen de mí {GENEROS[gen[0]].split(' (')[0]}: {gen[1]}")
     return hechos
 
 
-def reflexionar_quien_soy(con) -> str:
+def firma(hechos: list[str]) -> str:
+    """Lo que dicen los hechos sin los contadores: si solo cambiaron los números, no hay nada nuevo que pensar."""
+    return "\n".join(re.sub(r"\d+", "#", h) for h in hechos)
+
+
+def reflexionar_quien_soy(con) -> str | None:
     con.executescript(ESQUEMA)
     hechos = hechos_propios(con)
+    f = firma(hechos)
+    previa = con.execute("SELECT valor FROM identidad WHERE clave='firma_quien'").fetchone()
+    if previa and previa[0] == f:
+        return "quién soy sin cambios: no pasó nada nuevo desde la última vez"
     lista = "\n".join(f"- {h}" for h in hechos)
     texto = modelo.llamar("quien_soy", PEDIDO_QUIEN.format(hechos=lista), sistema=SISTEMA_REFLEXION)
     ok, malas = filtrar(oraciones(texto), lista)
@@ -226,6 +246,8 @@ def reflexionar_quien_soy(con) -> str:
     _guardar(_yo() / "quien-soy.md", contenido)
     con.execute("INSERT INTO reflexiones (fecha, tema_id, archivo, notas, frases_ok, frases_rechazadas) VALUES (?, NULL, ?, 0, ?, ?)",
                 (memoria.ahora(), "quien-soy.md", len(ok), malas))
+    con.execute("INSERT OR REPLACE INTO identidad (clave, valor, motivo, fecha) VALUES ('firma_quien', ?, NULL, ?)",
+                (f, memoria.ahora()))
     con.commit()
     return f"reescribí quién soy ({len(ok)} oraciones respaldadas, {malas} descartadas)"
 

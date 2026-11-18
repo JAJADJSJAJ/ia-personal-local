@@ -114,6 +114,9 @@ def lecturas_hoy(con) -> int:
 
 
 def guardar_lectura(con, titulo, url) -> int:
+    # Releer algo (el artículo de origen de una pregunta) usa la misma lectura
+    if fila := con.execute("SELECT id FROM lecturas WHERE url=?", (url,)).fetchone():
+        return fila[0]
     cur = con.execute("INSERT INTO lecturas (fecha, titulo, url) VALUES (?, ?, ?)", (ahora(), titulo, url))
     return cur.lastrowid
 

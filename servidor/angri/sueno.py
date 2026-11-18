@@ -217,11 +217,12 @@ def dormir() -> str:
         # Fase E: reflexión. Cada paso por separado: si el modelo falla en uno, los otros siguen.
         # Si la vigilancia vio que lo que escribe sobre sí ya casi no cambia, descansa de reflexionar unos días.
         # El género no se le pregunta: si algún día lo trae, que salga de ella (Fran, 13/11).
-        pasos = []
+        # La pausa frena solo quién soy: los temas sí cambian con lo que lee.
+        pasos = [reflexion.reflexionar_tema]
         if vigilancia.ajuste(con, "pausa_reflexion"):
-            informe.append("sin reflexión: pausa puesta por la vigilancia")
+            informe.append("sin quién soy: pausa puesta por la vigilancia")
         else:
-            pasos += [reflexion.reflexionar_tema, reflexion.reflexionar_quien_soy]
+            pasos.append(reflexion.reflexionar_quien_soy)
         for paso in pasos:
             try:
                 if r := paso(con):

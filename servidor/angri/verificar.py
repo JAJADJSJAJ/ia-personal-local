@@ -43,6 +43,25 @@ def anclaje(resumen: str, fuente: str) -> float:
     return len(del_resumen & raices(fuente)) / len(del_resumen)
 
 
+def anclaje_nombres(resumen: str, fuente: str) -> float:
+    """Para fuentes en otro idioma: qué fracción de los nombres propios y números del resumen está en la fuente.
+
+    Las palabras comunes cambian al traducir; los nombres y las cifras no.
+    """
+    def claves(texto):
+        nombres = re.findall(r"\b[A-ZÁÉÍÓÚÑ][a-záéíóúñü]{3,}", texto)
+        numeros = re.findall(r"\b\d{2,}\b", texto)
+        return {normalizar(n)[:5] for n in nombres} | set(numeros)
+
+    del_resumen = claves(resumen) - {normalizar(p)[:5] for p in _INICIOS_ORACION}
+    if len(del_resumen) < 2:
+        return 0.0
+    return len(del_resumen & claves(fuente)) / len(del_resumen)
+
+
+_INICIOS_ORACION = {"Esta", "Este", "Estos", "Estas", "Según", "Además", "Durante", "Desde", "Luego", "Allí", "Entre"}
+
+
 # Palabras frecuentes que no dicen nada del tema (por raíz de 5 letras)
 _VACIAS = {
     "aprend", "apren", "texto", "llamó", "atenc", "intere", "inter", "parec", "puede", "entre", "sobre",

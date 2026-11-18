@@ -30,12 +30,14 @@ Respondé la pregunta en 2 a 4 oraciones usando solo lo que dicen las notas. Si 
 
 PEDIDO_BUSQUEDA = """PREGUNTA: {pregunta}
 {ya_buscado}
-Escribí una búsqueda corta para Wikipedia (2 a 4 palabras clave, sin signos de pregunta) que ayude a responderla. Solo las palabras."""
+Escribí una búsqueda corta (2 a 4 palabras clave, sin signos de pregunta) que ayude a responderla. Solo las palabras."""
 
 PEDIDO_INVESTIGABLE = """PREGUNTA: {pregunta}
 
-¿Esta pregunta se puede responder con datos buscando en una enciclopedia como Wikipedia?
-Respondé NO si es una opinión, si es sobre vos misma, si es muy vaga o si nadie podría saberlo. Respondé solo SI o NO."""
+¿Esta pregunta se puede responder con datos buscando en una enciclopedia o en internet?
+Las preguntas de "por qué" o "cómo" sobre hechos históricos, lugares, personas u obras sí se pueden responder.
+Respondé NO solo si es una opinión, si es sobre vos misma, si no dice de qué o de quién habla, o si nadie podría saberlo.
+Respondé solo SI o NO."""
 
 
 def abiertos(con) -> list[tuple]:

@@ -36,6 +36,7 @@ PEDIDO_NOTA_OBJETIVO = """Estás buscando responder esta pregunta: {pregunta}
 
 Contá qué dice este texto en 3 a 5 oraciones cortas, priorizando lo que tenga que ver con la pregunta.
 Contá solo lo que dice el texto, aunque no responda la pregunta.
+Si el texto está en otro idioma, la nota va en español y la CITA se copia en el idioma del texto.
 Después, en una línea aparte que empiece con CITA:, copiá textualmente, sin cambiar ninguna palabra, una oración completa del texto que lo respalde.
 
 TÍTULO: {titulo}
@@ -96,7 +97,8 @@ def anotar(con, art: dict, pedido: str, **extra) -> tuple[int | None, str, dict 
         motivo = "la nota parece una orden"
     elif verificar.es_meta(resumen):
         motivo = "la nota habla del texto, no del mundo"
-    elif (a := verificar.anclaje(resumen, art["texto"])) < config.ANCLAJE_MINIMO:
+    elif (a := (verificar.anclaje_nombres if art.get("idioma", "es") != "es" else verificar.anclaje)(
+            resumen, art["texto"])) < config.ANCLAJE_MINIMO:
         motivo = f"el resumen agrega cosas que el texto no dice (anclaje {a:.0%})"
     if motivo:
         memoria.evento(con, "nota_rechazada", f"{art['titulo']}: {motivo}")
@@ -171,22 +173,55 @@ def dejar_investigacion(con, pregunta: str):
         bandeja.dejar(con, "dejado", f"Dejé «{pregunta}» por ahora: no encontré una respuesta clara.", 1)
 
 
-def elegir_articulo(con, titulos: list[str], vector_pregunta) -> dict | None:
-    """De los resultados de la búsqueda, el que más se parece a la pregunta (título + comienzo).
+def parecido(art: dict, vector_pregunta) -> float:
+    """Cuánto se parece un artículo a la pregunta: el comienzo o el mejor párrafo, lo que dé más.
+
+    Solo el comienzo no alcanza: la respuesta suele estar más abajo (un club, una muerte, un siglo puntual).
+    """
+    parrafos = [f"{art['titulo']}. {art['texto'][:600]}"]
+    parrafos += [q.strip() for q in art["texto"].split("\n") if len(q.strip()) > 80][:40]
+    return float((vectores.documentos(parrafos) @ vector_pregunta).max())
+
+
+def elegir_articulo(con, candidatos: list[dict], vector_pregunta) -> dict | None:
+    """De los candidatos, el que más se parece a la pregunta.
 
     Si ninguno se parece lo suficiente, no lee nada: mejor gastar una búsqueda que leer algo sin relación.
     """
     leidos = memoria.urls_leidas(con)
-    candidatos = [a for t in titulos if (a := fuentes.articulo(t)) and a["url"] not in leidos]
+    candidatos = [a for a in candidatos if a and a["url"] not in leidos]
     if not candidatos:
         return None
-    m = vectores.documentos([f"{a['titulo']}. {a['texto'][:600]}" for a in candidatos])
-    sims = m @ vector_pregunta
-    mejor = int(sims.argmax())
-    if float(sims[mejor]) < config.ARTICULO_SIMILITUD_MINIMA:
-        memoria.evento(con, "busqueda_sin_relacion", f"{candidatos[mejor]['titulo']} ({float(sims[mejor]):.2f})")
+    sims = [parecido(a, vector_pregunta) for a in candidatos]
+    mejor = max(range(len(sims)), key=sims.__getitem__)
+    if sims[mejor] < config.ARTICULO_SIMILITUD_MINIMA:
+        memoria.evento(con, "busqueda_sin_relacion",
+                       f"{candidatos[mejor]['titulo']} [{candidatos[mejor].get('fuente', '')}] ({sims[mejor]:.2f})")
         return None
     return candidatos[mejor]
+
+
+def candidatos_de(fuente: str, consulta: str, leidos: set[str]) -> list[dict]:
+    """Artículos de Wikipedia para una búsqueda, en el idioma 'es' o 'en'."""
+    n = config.CANDIDATOS_POR_BUSQUEDA
+    return [fuentes.articulo(t, fuente) for t in fuentes.buscar(consulta, leidos, cantidad=n, idioma=fuente)]
+
+
+def articulo_de_origen(con, oid: int, ya_buscado: list[str]) -> dict | None:
+    """El artículo del que salió la pregunta, para releerlo entero una vez: muchas veces la respuesta está ahí."""
+    if ORIGEN in ya_buscado:
+        return None
+    fila = con.execute("SELECT l.titulo, l.url FROM objetivos o JOIN preguntas p ON p.id=o.pregunta_id "
+                       "JOIN lecturas l ON l.id=p.lectura_id WHERE o.id=?", (oid,)).fetchone()
+    con.execute("INSERT INTO busquedas (objetivo_id, fecha, consulta, resultados) VALUES (?, ?, ?, ?)",
+                (oid, memoria.ahora(), ORIGEN, 1 if fila else 0))
+    if not fila or "wikipedia.org" not in (fila[1] or ""):
+        return None
+    idioma = "en" if "//en." in fila[1] else "es"
+    return fuentes.articulo(fila[0], idioma)
+
+
+ORIGEN = "(releer el artículo de origen)"
 
 
 def ciclo_objetivo(con) -> tuple[str, int | None]:
@@ -207,19 +242,30 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
     ya_buscado = [c for (c,) in con.execute("SELECT consulta FROM busquedas WHERE objetivo_id=?", (oid,))]
     vector_pregunta = vectores.consulta(pregunta)
     art, probadas = None, []
-    for consulta in objetivos.consultas_de_busqueda(pregunta, ya_buscado):
-        titulos = fuentes.buscar(consulta, memoria.urls_leidas(con), cantidad=config.CANDIDATOS_POR_BUSQUEDA)
-        con.execute("INSERT INTO busquedas (objetivo_id, fecha, consulta, resultados) VALUES (?, ?, ?, ?)",
-                    (oid, memoria.ahora(), consulta, len(titulos)))
-        probadas.append(consulta)
-        art = elegir_articulo(con, titulos, vector_pregunta)
+    origen = articulo_de_origen(con, oid, ya_buscado)
+    if origen and parecido(origen, vector_pregunta) >= config.ARTICULO_SIMILITUD_MINIMA:
+        art = origen
+    consultas = [] if art else objetivos.consultas_de_busqueda(pregunta, [c for c in ya_buscado if c != ORIGEN])
+    # Primero Wikipedia en español; si con ninguna búsqueda alcanza, en inglés.
+    for fuente in ([] if art else config.FUENTES_INVESTIGACION):
+        for consulta in consultas:
+            etiqueta = consulta if fuente == "es" else f"[{fuente}] {consulta}"
+            if etiqueta in ya_buscado:
+                continue
+            cands = candidatos_de(fuente, consulta, memoria.urls_leidas(con))
+            con.execute("INSERT INTO busquedas (objetivo_id, fecha, consulta, resultados) VALUES (?, ?, ?, ?)",
+                        (oid, memoria.ahora(), etiqueta, len([c for c in cands if c])))
+            probadas.append(etiqueta)
+            art = elegir_articulo(con, cands, vector_pregunta)
+            if art:
+                break
         if art:
             break
     con.commit()
     if art is None:
         # Sin resultados: cuenta como lectura gastada. Se cierra solo si ya no quedan búsquedas por probar.
         estado = objetivos.registrar_lectura(con, oid, pregunta, None, None)
-        if estado is None and gastado + 1 >= 2 and len(ya_buscado) + len(probadas) >= 4:
+        if estado is None and gastado + 1 >= 2 and len(ya_buscado) + len(probadas) >= 4 * len(config.FUENTES_INVESTIGACION):
             objetivos.cerrar(con, oid, "agotado", pregunta, [])
             estado = "agotado"
         if estado:
