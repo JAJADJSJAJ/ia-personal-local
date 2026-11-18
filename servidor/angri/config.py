@@ -37,7 +37,7 @@ CHARLA_PAUSA_MINUTOS = 10
 TURNOS_DE_CONTEXTO = 6
 
 # Lectura
-USER_AGENT = "AngriBot/0.1 (IA personal local, solo lectura)"
+USER_AGENT = "AngriBot/0.2 (IA personal local, solo lectura; https://github.com/JAJADJSJAJ/ia-personal-local)"
 LARGO_MINIMO = 800      # caracteres: menos que esto no vale la pena
 LARGO_MAXIMO = 3000     # se recorta acá (unos 800 tokens)
 PAGINAS_POR_DIA = 400   # solo un tope de seguridad por si algo se descontrola: el ritmo lo cuida el contador
