@@ -202,8 +202,10 @@ def elegir_articulo(con, candidatos: list[dict], vector_pregunta) -> dict | None
 
 
 def candidatos_de(fuente: str, consulta: str, leidos: set[str]) -> list[dict]:
-    """Artículos de Wikipedia para una búsqueda, en el idioma 'es' o 'en'."""
+    """Artículos para una búsqueda: Wikipedia en un idioma ('es', 'en', 'it'...) o 'wikidata'."""
     n = config.CANDIDATOS_POR_BUSQUEDA
+    if fuente == "wikidata":
+        return [fuentes.wikidata_articulo(q) for q in fuentes.wikidata_buscar(consulta, leidos, n)]
     return [fuentes.articulo(t, fuente) for t in fuentes.buscar(consulta, leidos, cantidad=n, idioma=fuente)]
 
 
@@ -246,9 +248,9 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
     if origen and parecido(origen, vector_pregunta) >= config.ARTICULO_SIMILITUD_MINIMA:
         art = origen
     consultas = [] if art else objetivos.consultas_de_busqueda(pregunta, [c for c in ya_buscado if c != ORIGEN])
-    # Primero Wikipedia en español; si con ninguna búsqueda alcanza, en inglés.
+    # Primero Wikipedia en español con todas las búsquedas; si no alcanza, las otras fuentes con la mejor.
     for fuente in ([] if art else config.FUENTES_INVESTIGACION):
-        for consulta in consultas:
+        for consulta in (consultas if fuente == "es" else consultas[:config.CONSULTAS_FUERA_DEL_ES]):
             etiqueta = consulta if fuente == "es" else f"[{fuente}] {consulta}"
             if etiqueta in ya_buscado:
                 continue
@@ -265,7 +267,7 @@ def ciclo_objetivo(con) -> tuple[str, int | None]:
     if art is None:
         # Sin resultados: cuenta como lectura gastada. Se cierra solo si ya no quedan búsquedas por probar.
         estado = objetivos.registrar_lectura(con, oid, pregunta, None, None)
-        if estado is None and gastado + 1 >= 2 and len(ya_buscado) + len(probadas) >= 4 * len(config.FUENTES_INVESTIGACION):
+        if estado is None and gastado + 1 >= 2 and len(ya_buscado) + len(probadas) >= 3 + len(config.FUENTES_INVESTIGACION):
             objetivos.cerrar(con, oid, "agotado", pregunta, [])
             estado = "agotado"
         if estado:

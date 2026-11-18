@@ -1,7 +1,8 @@
 """Fuentes de lectura. Solo lectura.
 
 - Al azar: un artículo cualquiera de Wikipedia en español.
-- Para investigar, en orden: Wikipedia en español y Wikipedia en inglés. Si la búsqueda no trae nada,
+- Para investigar, en orden: Wikipedia en español, en inglés, Wikidata (datos sueltos: fechas, lugares,
+  población) y Wikipedia en italiano, francés, portugués y alemán. Si la búsqueda no trae nada,
   se prueba con el autocompletado (tolera nombres mal escritos: Zelenoborski -> Zelenoborsky).
 - La web general queda lista (pagina_web) pero sin buscador: DuckDuckGo bloquea a los bots y no se esquiva.
   Hace falta una API de búsqueda con clave.
@@ -17,7 +18,7 @@ from html.parser import HTMLParser
 from . import config
 
 API = "https://es.wikipedia.org/w/api.php"
-APIS = {"es": API, "en": "https://en.wikipedia.org/w/api.php"}
+APIS = {"es": API} | {i: f"https://{i}.wikipedia.org/w/api.php" for i in ("en", "it", "fr", "pt", "de")}
 
 
 class Espera(Exception):
@@ -223,3 +224,111 @@ def articulo_al_azar(ya_leidos: set[str], intentos: int = 8) -> dict | None:
             continue
         return {"titulo": titulo, "url": url, "texto": _recortar(texto), "fuente": "Wikipedia"}
     return None
+
+
+# ---------------------------------------------------------------- Wikidata
+
+WIKIDATA = "https://www.wikidata.org/w/api.php"
+_WD_MAX_DATOS = 40   # datos por entidad que se pasan a texto
+
+
+def _wd(params: dict) -> dict:
+    _respetar_ritmo()
+    url = WIKIDATA + "?" + urllib.parse.urlencode({"format": "json", **params})
+    pedido = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT})
+    try:
+        with urllib.request.urlopen(pedido, timeout=30) as r:
+            return json.load(r)
+    except urllib.error.HTTPError:
+        raise
+    except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+        raise SinRed(f"sin internet: {getattr(e, 'reason', e)}") from e
+
+
+def wikidata_buscar(consulta: str, ya_leidos: set[str], cantidad: int = 3) -> list[str]:
+    """Ids (Q...) de entidades de Wikidata para una búsqueda. Prueba con todo y, si no, con la primera palabra."""
+    palabras = consulta.split()
+    for q in dict.fromkeys([consulta, " ".join(palabras[:2]), palabras[0] if palabras else ""]):
+        if not q:
+            continue
+        datos = _wd({"action": "wbsearchentities", "search": q, "language": "es", "uselang": "es",
+                     "limit": str(cantidad * 2), "type": "item"})
+        ids = [r["id"] for r in datos.get("search", [])
+               if f"https://www.wikidata.org/wiki/{r['id']}" not in ya_leidos]
+        if ids:
+            return ids[:cantidad]
+    return []
+
+
+def _etiqueta(entidad: dict) -> str:
+    e = entidad.get("labels", {})
+    return (e.get("es") or e.get("en") or next(iter(e.values()), {})).get("value", "")
+
+
+def _valor(dv: dict, etiquetas: dict) -> str | None:
+    """Un valor de Wikidata como texto en español, o None si no se puede leer."""
+    tipo, v = dv.get("type"), dv.get("value")
+    if tipo == "wikibase-entityid":
+        return etiquetas.get(v.get("id")) or None
+    if tipo == "time":
+        t, precision = v["time"], v.get("precision", 11)
+        anio = t[1:5].lstrip("0") or "0"
+        anio = anio + (" a. C." if t.startswith("-") else "")
+        if precision >= 11:
+            return f"{int(t[9:11])}/{int(t[6:8])}/{anio}"
+        return anio
+    if tipo == "quantity":
+        n = v["amount"].lstrip("+")
+        return n[:-2] if n.endswith(".0") else n
+    if tipo == "monolingualtext":
+        return v.get("text")
+    if tipo == "string":
+        return v if len(v) < 120 and not v.startswith("http") else None
+    return None
+
+
+def wikidata_articulo(qid: str) -> dict | None:
+    """Los datos de una entidad de Wikidata escritos como texto: «Fecha de nacimiento: 1322.»"""
+    datos = _wd({"action": "wbgetentities", "ids": qid, "languages": "es|en",
+                 "props": "labels|descriptions|claims"})
+    ent = datos.get("entities", {}).get(qid)
+    if not ent or "missing" in ent:
+        return None
+    nombre = _etiqueta(ent)
+    afirmaciones = []
+    for prop, lista in ent.get("claims", {}).items():
+        for c in lista:
+            snak = c.get("mainsnak", {})
+            dv = snak.get("datavalue")
+            # Identificadores de catálogos, imágenes y links no dicen nada del mundo
+            if snak.get("datatype") in ("external-id", "commonsMedia", "url", "globe-coordinate", "geo-shape"):
+                continue
+            if dv and c.get("rank") != "deprecated":
+                cuando = c.get("qualifiers", {}).get("P585", [{}])[0].get("datavalue")   # "en tal fecha"
+                afirmaciones.append((prop, dv, cuando))
+    # Primero se juntan todos los ids a traducir (propiedades y valores) y se piden de una vez
+    ids = {p for p, _, _ in afirmaciones}
+    ids |= {dv["value"]["id"] for _, dv, _ in afirmaciones if dv.get("type") == "wikibase-entityid"}
+    etiquetas = {}
+    ids = sorted(ids)
+    for i in range(0, min(len(ids), 150), 50):
+        r = _wd({"action": "wbgetentities", "ids": "|".join(ids[i:i + 50]), "languages": "es|en", "props": "labels"})
+        etiquetas |= {k: _etiqueta(e) for k, e in r.get("entities", {}).items()}
+    lineas, vistas = [], set()
+    for prop, dv, cuando in afirmaciones:
+        nombre_prop, valor = etiquetas.get(prop), _valor(dv, etiquetas)
+        if not nombre_prop or not valor:
+            continue
+        extra = f" (en {_valor(cuando, etiquetas)})" if cuando else ""
+        linea = f"{nombre} — {nombre_prop}: {valor}{extra}."
+        if linea not in vistas:
+            vistas.add(linea)
+            lineas.append(linea)
+        if len(lineas) >= _WD_MAX_DATOS:
+            break
+    desc = ent.get("descriptions", {}).get("es", ent.get("descriptions", {}).get("en", {})).get("value", "")
+    texto = (f"{nombre}: {desc}.\n" if desc else "") + "\n".join(lineas)
+    if not nombre or len(texto) < config.LARGO_MINIMO // 2:
+        return None
+    return {"titulo": nombre, "url": f"https://www.wikidata.org/wiki/{qid}", "texto": texto,
+            "fuente": "Wikidata", "idioma": "es"}

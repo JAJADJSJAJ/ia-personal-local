@@ -58,7 +58,8 @@ PROB_OBJETIVO_BASE = 0.3       # probabilidad de trabajar un objetivo en vez de 
 PROB_OBJETIVO_MAX = 0.7        # ...que sube con la cantidad de temas, sin pasar de esto
 SATURACION = 3                 # ciclos seguidos en el mismo tema antes de forzar un cambio
 CANDIDATOS_POR_BUSQUEDA = 3    # artículos que se miran antes de elegir cuál leer
-FUENTES_INVESTIGACION = ("es", "en")   # orden en que busca: Wikipedia en español, después en inglés
+FUENTES_INVESTIGACION = ("es", "en", "wikidata", "it", "fr", "pt", "de")   # orden en que busca
+CONSULTAS_FUERA_DEL_ES = 1   # en las otras fuentes se prueba solo la mejor búsqueda, para no gastar pedidos
 ARTICULO_SIMILITUD_MINIMA = 0.35  # coseno pregunta ↔ artículo para que valga la pena leerlo
 PARRAFOS_POR_LECTURA = 4      # en búsquedas, se leen los párrafos más relacionados con la pregunta
 
