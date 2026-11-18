@@ -40,5 +40,28 @@ class TestFirmaQuienSoy(unittest.TestCase):
         self.assertNotEqual(reflexion.firma(a), reflexion.firma(b))
 
 
+class TestPausaFuentes(unittest.TestCase):
+    def test_respeta_retry_after(self):
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        from angri import config
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(config, "DATOS", Path(d)):
+            self.assertFalse(fuentes.en_pausa("wikidata"))
+            fuentes.pausar("wikidata", "120")
+            self.assertTrue(fuentes.en_pausa("wikidata"))
+            self.assertFalse(fuentes.en_pausa("en"))
+
+
+class TestJuez(unittest.TestCase):
+    def test_gana_la_mayoria(self):
+        from unittest import mock
+        from angri import objetivos
+        with mock.patch("angri.objetivos.modelo.llamar", side_effect=["NO", "SI", "**SI**"]):
+            self.assertEqual(objetivos.juzgar("p", "n"), "SI")
+        with mock.patch("angri.objetivos.modelo.llamar", side_effect=["NO", "PARCIAL", "NO"]):
+            self.assertEqual(objetivos.juzgar("p", "n"), "NO")
+
+
 if __name__ == "__main__":
     unittest.main()

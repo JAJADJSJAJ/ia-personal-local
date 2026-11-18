@@ -19,7 +19,11 @@ PEDIDO_RESPONDE = """PREGUNTA: {pregunta}
 NOTA que acabás de tomar:
 {nota}
 
-¿La nota responde la pregunta? Respondé solo SI, PARCIAL o NO."""
+¿La nota responde la pregunta?
+- SI: la nota tiene el dato que pide la pregunta, aunque también diga otras cosas.
+- PARCIAL: tiene una parte de la respuesta o algo muy relacionado.
+- NO: no dice nada de lo que pide la pregunta.
+Respondé solo SI, PARCIAL o NO."""
 
 PEDIDO_RESPUESTA = """PREGUNTA: {pregunta}
 
@@ -128,12 +132,27 @@ def registrar_lectura(con, objetivo_id: int, pregunta: str, nota_id: int | None,
     """Anota cuánto respondió la lectura y decide si el objetivo se cierra. Devuelve el estado final o None."""
     con.execute("UPDATE objetivos SET gastado=gastado+1, ultima=? WHERE id=?", (memoria.ahora(), objetivo_id))
     if nota_id is not None:
-        r = modelo.llamar("responde", PEDIDO_RESPONDE.format(pregunta=pregunta, nota=resumen)).upper()
-        responde = "SI" if r.startswith("SI") or r.startswith("SÍ") else "PARCIAL" if "PARCIAL" in r else "NO"
+        responde = juzgar(pregunta, resumen)
         con.execute("INSERT OR REPLACE INTO objetivo_nota (objetivo_id, nota_id, responde) VALUES (?, ?, ?)",
                     (objetivo_id, nota_id, responde))
     con.commit()
     return evaluar_cierre(con, objetivo_id)
+
+
+def _veredicto(r: str) -> str:
+    r = r.strip().strip("*").upper()
+    return "SI" if r.startswith(("SI", "SÍ")) else "PARCIAL" if "PARCIAL" in r else "NO"
+
+
+def juzgar(pregunta: str, resumen: str, votos: int = 3) -> str:
+    """¿La nota responde? Un modelo chico cambia de opinión con la misma nota: vota varias veces y gana la mayoría.
+
+    Empate: el veredicto más alto. Cerrar como respondido igual pide un SI, dos notas útiles y una respuesta anclada.
+    """
+    orden = ["NO", "PARCIAL", "SI"]
+    vs = [_veredicto(modelo.llamar("responde", PEDIDO_RESPONDE.format(pregunta=pregunta, nota=resumen)))
+          for _ in range(votos)]
+    return max(orden, key=lambda v: (vs.count(v), orden.index(v)))
 
 
 def evaluar_cierre(con, objetivo_id: int) -> str | None:

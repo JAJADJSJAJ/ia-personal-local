@@ -57,6 +57,28 @@ def _respetar_ritmo():
                             json.dumps({"hora": hora, "n": n + 1, "ultimo": time.time()}))
 
 
+def _pausas() -> dict:
+    try:
+        return json.loads((config.DATOS / "pausas-fuentes.json").read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def en_pausa(fuente: str) -> bool:
+    return _pausas().get(fuente, 0) > time.time()
+
+
+def pausar(fuente: str, retry_after: str | None):
+    """La fuente pidió esperar (429/503): se respeta su Retry-After, o 10 minutos si no dice."""
+    from . import memoria
+    try:
+        segundos = max(60, int(retry_after or 600))
+    except ValueError:
+        segundos = 600
+    pausas = _pausas() | {fuente: time.time() + segundos}
+    memoria.escribir_seguro(config.DATOS / "pausas-fuentes.json", json.dumps(pausas))
+
+
 def _pedir(params: dict, idioma: str = "es") -> dict:
     _respetar_ritmo()
     url = APIS[idioma] + "?" + urllib.parse.urlencode(params)
@@ -97,7 +119,9 @@ def buscar(consulta: str, ya_leidos: set[str], cantidad: int = 5, idioma: str = 
     titulos = [r["title"] for r in datos.get("query", {}).get("search", [])]
     if not titulos:   # nada con todas las palabras: autocompletado con la primera parte (tolera errores de escritura)
         palabras = consulta.split()
-        for corta in dict.fromkeys([" ".join(palabras[:2]), palabras[0] if palabras else ""]):
+        # Los nombres propios primero: "Población Zelenoborsky 2010" -> "Zelenoborsky"
+        propios = [w for w in palabras[1:] if w[:1].isupper()]
+        for corta in dict.fromkeys(propios[:2] + [" ".join(palabras[:2]), palabras[0] if palabras else ""]):
             if not corta:
                 continue
             datos = _pedir({"action": "opensearch", "format": "json", "search": corta, "limit": str(cantidad * 2),

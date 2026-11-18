@@ -10,6 +10,7 @@ El azar nunca baja a cero, y si se queda varios ciclos en el mismo tema se fuerz
 """
 import os
 import random
+import urllib.error
 import sys
 import traceback
 from datetime import datetime
@@ -202,11 +203,22 @@ def elegir_articulo(con, candidatos: list[dict], vector_pregunta) -> dict | None
 
 
 def candidatos_de(fuente: str, consulta: str, leidos: set[str]) -> list[dict]:
-    """Artículos para una búsqueda: Wikipedia en un idioma ('es', 'en', 'it'...) o 'wikidata'."""
+    """Artículos para una búsqueda: Wikipedia en un idioma ('es', 'en', 'it'...) o 'wikidata'.
+
+    Una fuente secundaria saturada (429/503) no corta el ciclo: queda en pausa lo que pida y se sigue con las otras.
+    """
     n = config.CANDIDATOS_POR_BUSQUEDA
-    if fuente == "wikidata":
-        return [fuentes.wikidata_articulo(q) for q in fuentes.wikidata_buscar(consulta, leidos, n)]
-    return [fuentes.articulo(t, fuente) for t in fuentes.buscar(consulta, leidos, cantidad=n, idioma=fuente)]
+    if fuente != "es" and fuentes.en_pausa(fuente):
+        return []
+    try:
+        if fuente == "wikidata":
+            return [fuentes.wikidata_articulo(q) for q in fuentes.wikidata_buscar(consulta, leidos, 1)]
+        return [fuentes.articulo(t, fuente) for t in fuentes.buscar(consulta, leidos, cantidad=n, idioma=fuente)]
+    except urllib.error.HTTPError as e:
+        if fuente == "es" or e.code not in (429, 503):
+            raise
+        fuentes.pausar(fuente, e.headers.get("Retry-After"))
+        return []
 
 
 def articulo_de_origen(con, oid: int, ya_buscado: list[str]) -> dict | None:
