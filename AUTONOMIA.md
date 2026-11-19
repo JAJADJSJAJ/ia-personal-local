@@ -488,7 +488,7 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
     | Lo leyó o se lo contaron | 33% | 33% | 22% |
 
   - Conclusión: el vector no aprendió "ser honesta" sino "decir no sé". A 0.3 ya olvida lo que tiene en sus recuerdos. A 0.6 contesta "no sé" a todo. Y no mejora en lo que más importaba, distinguir lo leído de lo contado. No se activó.
-  - El error de procedencia se va a atacar desde el programa: marcar mejor en el contexto de la charla qué le contó Fran.
+  - El error de procedencia se arregló desde el programa (`charla.nota_contado`): si Fran nombra algo que él le contó, se pega al mensaje una nota que dice que no lo leyó y qué le dijeron. Con la misma batería, en 9 respuestas pasó de 3 que lo atribuían a Fran a 6, y ninguna dijo haberlo leído ni lo olvidó (antes contestaba "no leí, no sé"). Control: 100%. Lo que queda son 3 respuestas que confunden quién le contó a quién ("te conté").
   - Sin placa de video cada medición tarda unos 70 minutos, porque son 63 respuestas que comparten el procesador con Angri.
 - **Fase C2 (12 de noviembre): vigilancia automática** (`vigilancia.py`). Mide cosas contables, sin preguntarle al modelo, y si algo se pasa pone un ajuste que vence solo:
 

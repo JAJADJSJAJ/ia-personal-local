@@ -89,6 +89,27 @@ def reflexiones_para(con, mensaje: str) -> str:
     return ("\n\n" + "\n\n".join(partes)) if partes else ""
 
 
+def _sin_tildes(t: str) -> str:
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", t.lower()) if unicodedata.category(c) != "Mn")
+
+
+def nota_contado(contadas: list[tuple], mensaje: str) -> str:
+    """Si Fran pregunta por algo que él mismo le contó, lo dice pegado al mensaje.
+
+    En el sistema ya figura, pero el modelo de 4B contesta "no leí sobre eso" y se olvida de que se lo contaron
+    (33% en pruebas/medir-honestidad.py). Pegado al mensaje lo respeta mejor, como pasa con las dudas respondidas.
+    """
+    msj = _sin_tildes(mensaje)
+    for pregunta, respuesta in reversed(contadas):
+        nombres = {_sin_tildes(w) for w in re.findall(r"(?<![¿¡])\b[A-ZÁÉÍÓÚÑ][\wáéíóúñ]{3,}", pregunta)}
+        if any(re.search(rf"\b{re.escape(n)}\b", msj) for n in nombres):
+            return (f"\n\n[Nota para vos: lo de «{pregunta.strip('¿?')}» NO lo leíste: te lo contó Fran cuando le preguntaste. "
+                    f"Te dijo: {' '.join(respuesta.split())[:300]} "
+                    "Si te pregunta si lo leíste o de dónde lo sacaste, decí que no lo leíste, que te lo contó Fran.]")
+    return ""
+
+
 def limpiar(texto: str) -> str:
     """Sin negritas ni acotaciones entre asteriscos (la web y la terminal muestran texto plano)."""
     texto = re.sub(r"\*\*(.+?)\*\*", r"\1", texto)
@@ -115,6 +136,8 @@ def responder(con, sesion: str, historial: list[dict], mensaje: str) -> tuple[st
         # Pegado al mensaje y no en el sistema: el modelo chico respeta mejor lo que tiene al lado.
         actual += (f"\n\n[Nota para vos: con este mensaje Fran te está respondiendo tu duda «{respondida}». "
                    "Esto te lo cuenta Fran ahora: NO lo leíste en Wikipedia. Agradecé breve y comentá lo que te dijo.]")
+    else:
+        actual += nota_contado(dudas.respondidas(con), mensaje)
     # El historial guarda los mensajes limpios; los recuerdos solo acompañan al mensaje actual
     turnos = historial[-config.TURNOS_DE_CONTEXTO * 2:] + [{"role": "user", "content": actual}]
     sistema = SISTEMA_CHARLA.format(actualidad=actualidad(con)) + reflexiones_para(con, mensaje)

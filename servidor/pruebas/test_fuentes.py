@@ -65,3 +65,11 @@ class TestJuez(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestNotaContado(unittest.TestCase):
+    def test_marca_lo_que_conto_fran(self):
+        from angri import charla
+        contadas = [("¿Qué le pasó a Imelda Lambertini?", "Murió en 1333.")]
+        self.assertIn("te lo contó Fran", charla.nota_contado(contadas, "¿Leíste sobre imelda?"))
+        self.assertEqual(charla.nota_contado(contadas, "¿Qué pasó hoy?"), "")
