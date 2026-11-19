@@ -1,13 +1,35 @@
-# IA personal local
+# Angri — una IA que vive sola
 
-Una IA que vive sola en una PC vieja dedicada (i5-4570, 16 GB, sin placa de video), prendida 24/7. Nace sin intereses de base, busca y lee en internet por su cuenta, recuerda, y deja un diario de lo que hizo.
+Angri es una IA chiquita que vive en una PC vieja (i5-4570, 16 GB de RAM, sin placa de video), prendida todo el día. Nadie le dice qué hacer: lee por su cuenta, se hace preguntas, las investiga, toma notas y escribe un diario de lo que hizo.
+
+Todo corre en la casa. El modelo es Qwen3.5 4B con llama.cpp, y solo sale a internet para leer.
+
+## Qué hace
+
+- **Cada 20 minutos se despierta** y elige qué hacer: leer algo al azar, investigar una pregunta suya, repasar lo que anotó, conectar dos cosas que leyó o descansar.
+- **Lee y toma notas.** Cada nota tiene que llevar una cita textual de lo que leyó; si la cita no está en el texto, la nota se descarta.
+- **Investiga sus propias preguntas** en Wikipedia (en varios idiomas) y en Wikidata. Si no encuentra la respuesta, a veces me pregunta a mí.
+- **De noche duerme:** ordena lo que aprendió, escribe un resumen del día y reflexiona sobre los temas que le interesan y sobre quién es.
+- **Me avisa al celular** cuando encuentra algo o tiene una duda.
+- **Se puede charlar con ella** por la terminal o desde una página web en 3D.
+
+## Cómo está armado
+
+El modelo no hace nada solo: hay un programa que la despierta, decide para qué llamarlo y revisa lo que responde. El código vigila que no invente, que no se repita y que no se quede pegada a un tema. Si algo se desvía, ajusta solo (por ejemplo, la pone a leer más al azar o le pausa las reflexiones).
+
+```
+servidor/
+├── angri/      el código: ciclo, sueño, memoria, fuentes, charla, web
+├── pruebas/    las pruebas
+└── sistema/    instalación y servicios de systemd
+```
 
 ## Documentos
 
-- [INVESTIGACION.md](INVESTIGACION.md): hardware, sistema, motor, modelos, memoria, búsqueda.
-- [AUTONOMIA.md](AUTONOMIA.md): el bucle de vida propia, intereses, objetivos, sueño, aprendizaje.
-- [CASOS.md](CASOS.md): casos reales de agentes de larga duración y los ajustes que motivaron.
+- [INVESTIGACION.md](INVESTIGACION.md): el hardware, el sistema, los modelos y la memoria.
+- [AUTONOMIA.md](AUTONOMIA.md): cómo vive sola: intereses, objetivos, sueño.
+- [CASOS.md](CASOS.md): otros proyectos de agentes que corren mucho tiempo y lo que aprendí de ellos.
 
-## Qué no está en este repo
+## Qué no está acá
 
-Los modelos, la base de memoria, el diario y sus proyectos viven solo en la PC de IA (ver `.gitignore`).
+Los modelos, su memoria, su diario y sus claves viven solo en la PC de Angri.
