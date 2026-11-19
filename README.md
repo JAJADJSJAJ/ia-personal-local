@@ -4,6 +4,14 @@ Angri es una IA chiquita que vive en una PC vieja (i5-4570, 16 GB de RAM, sin pl
 
 Todo corre en la casa. El modelo es Qwen3.5 4B con llama.cpp, y solo sale a internet para leer.
 
+## Objetivo
+
+Ver cuánta vida propia se le puede dar a una IA chica con buen diseño, y que crezca cuando mejore el cerebro.
+
+La apuesta es que la sensación de que está viva depende más del programa que la rodea que del tamaño del modelo. Por eso casi todo el trabajo está en el bucle, la memoria, el sueño y la vigilancia. El modelo es reemplazable: si se cambia por uno más grande, su memoria y su diario se conservan. No se esperan ideas profundas, sino continuidad, intereses que cambian, recuerdos e iniciativa.
+
+Los pesos del modelo todavía no se tocaron. Solo se van a modificar si aparece un error concreto que se repite.
+
 ## Qué hace
 
 - **Cada 20 minutos se despierta** y elige qué hacer: leer algo al azar, investigar una pregunta suya, repasar lo que anotó, conectar dos cosas que leyó o descansar.
