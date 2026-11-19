@@ -10,7 +10,7 @@ Ver cuánta vida propia se le puede dar a una IA chica con buen diseño, y que c
 
 La apuesta es que la sensación de que está viva depende más del programa que la rodea que del tamaño del modelo. Por eso casi todo el trabajo está en el bucle, la memoria, el sueño y la vigilancia. El modelo es reemplazable: si se cambia por uno más grande, su memoria y su diario se conservan. No se esperan ideas profundas, sino continuidad, intereses que cambian, recuerdos e iniciativa.
 
-Los pesos del modelo todavía no se tocaron. Solo se van a modificar si aparece un error concreto que se repite.
+Los pesos del modelo todavía no se tocaron. Solo se van a modificar si aparece un error concreto que se repite. Ya se probó un vector de control para que invente menos: subió la honestidad de 75% a 80%, pero le hizo olvidar cosas que sabía, así que se descartó (el detalle está en AUTONOMIA.md, fase G2).
 
 ## Qué hace
 

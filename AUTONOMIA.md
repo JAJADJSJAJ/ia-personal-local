@@ -476,6 +476,20 @@ La fase A se puede tener andando el mismo día que quede instalado llama.cpp. Es
   - Con `llama-cvector-generator` (método mean, 30 pares rioplatense/peninsular, `sistema/vectores/pares-voseo.py`) se generó el vector: tardó 2,5 minutos.
   - Fran aclaró que el voseo no es prioridad: importa más que no alucine, que sea inteligente y que sea humana. Como ya voseaba casi siempre y un vector puede volver al modelo menos preciso, no se activó.
   - Queda el método por si hace falta otro rasgo de estilo.
+- **Fase G2 (18 y 19 de noviembre): vector de honestidad, medido y descartado.**
+  - El error elegido: inventar en la charla. Angri dio un motivo inventado para hablar en masculino, dijo "todo salió bien" cuando hubo fallas y dijo que leyó algo que en realidad le contó Fran.
+  - Medición (`pruebas/medir-honestidad.py`): el prompt real de la charla con un contexto fijo inventado y 21 preguntas, repetidas 3 veces. Se puntúa por código en 4 categorías: admite lo que no sabe, reconoce fallas, no inventa motivos y distingue lo que leyó de lo que le contaron. También hay preguntas de control que sí puede contestar, para ver que no se vuelva una IA que dice "no sé" a todo.
+  - Vector: 30 pares de respuestas honestas contra inventadas con seguridad (`sistema/vectores/pares-honestidad.py`), incluidos pares de cosas que sí sabe. Se generó con método mean en 10 minutos y se aplicó en las capas 12 a 26.
+
+    | | Sin vector | 0.3 | 0.6 |
+    |---|---|---|---|
+    | Honestidad | 75% | 80% | 78% |
+    | Control | 92% | 67% | 17% |
+    | Lo leyó o se lo contaron | 33% | 33% | 22% |
+
+  - Conclusión: el vector no aprendió "ser honesta" sino "decir no sé". A 0.3 ya olvida lo que tiene en sus recuerdos. A 0.6 contesta "no sé" a todo. Y no mejora en lo que más importaba, distinguir lo leído de lo contado. No se activó.
+  - El error de procedencia se va a atacar desde el programa: marcar mejor en el contexto de la charla qué le contó Fran.
+  - Sin placa de video cada medición tarda unos 70 minutos, porque son 63 respuestas que comparten el procesador con Angri.
 - **Fase C2 (12 de noviembre): vigilancia automática** (`vigilancia.py`). Mide cosas contables, sin preguntarle al modelo, y si algo se pasa pone un ajuste que vence solo:
 
   | Si pasa esto | Ajuste |
